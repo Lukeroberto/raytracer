@@ -7,7 +7,7 @@
 
 typedef vec3 color;
 
-void print_color(color pixel_color) {
+void write_color(color pixel_color) {
     printf("%d %d %d\n", 
             (int) (255.999 * pixel_color.x),
             (int) (255.999 * pixel_color.y),

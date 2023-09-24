@@ -8,8 +8,8 @@ double hit_sphere(point3 *center, double radius, ray *r) {
     vec3 inv_center = invert(center);
     vec3 oc = add(&r->origin, &inv_center);
 
-    double a = dot(&r->direction, &r->direction);
-    double b = 2.0 * dot(&oc, &r->direction);
+    double a = length_squared(r->direction);
+    double half_b = dot(&oc, &r->direction);
     double c = dot(&oc, &oc) - radius*radius;
 
     double discrim = b*b - 4 *a*c;
@@ -25,9 +25,9 @@ color ray_color(ray *r) {
     point3 center = {0, 0, -1};
     double t = hit_sphere(&center, 0.5, r); 
     if (t > 0.0) {
-        point3 rat = at(r, t);
-        point3 down = {0, 0, -1};
-        point3 sum = add(&rat, &down);
+        vec3 rat = at(r, t);
+        vec3 down = {0, 0, 1};
+        vec3 sum = add(&rat, &down);
         vec3 n = unit_vec(&sum);
         color normal_color = {n.x + 1.0, n.y + 1.0, n.z + 1.0};
         normal_color = mult(&normal_color, 0.5);

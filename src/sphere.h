@@ -6,6 +6,7 @@
 
 #include "vec3.h"
 #include "hittable.h"
+#include "interval.h"
 
 typedef struct {
     point3 center;
@@ -13,7 +14,7 @@ typedef struct {
 
 } sphere;
 
-bool hit(ray *r, sphere *sphere, double ray_tmin, double ray_tmax, hit_record *rec) {
+bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     vec3 oc = diff(&r->origin, &sphere->center);
 
     double a = length_squared(&r->direction);
@@ -26,8 +27,11 @@ bool hit(ray *r, sphere *sphere, double ray_tmin, double ray_tmax, hit_record *r
 
     // Find nearest root that lies within interval
     double root = (-half_b - sqrtd) / a;
-    if (root <= ray_tmin || root >= ray_tmax) {
-        return false;
+    if (!surrounds(ray_t, root)) {
+        root = (-half_b + sqrtd) / a;
+        if (!surrounds(ray_t, root)) {
+            return false;
+        }
     }
 
     rec->t = root;
@@ -40,13 +44,14 @@ bool hit(ray *r, sphere *sphere, double ray_tmin, double ray_tmax, hit_record *r
     return true;
 }
 
-bool hit_list(ray *r, sphere spheres[2], double ray_tmin, double ray_tmax, hit_record *record) {
+bool hit_list(ray *r, sphere spheres[], interval *ray_t, hit_record *record) {
     hit_record temp_rec;
     bool hit_anything = false;
-    double closest_so_far = ray_tmax;
+    double closest_so_far = ray_t->max;
 
     for (int i = 0; i < 2; i++) {
-        if (hit(r, &spheres[i], ray_tmin, closest_so_far, &temp_rec)) {
+        interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
+        if (hit(r, &spheres[i], &cur_interval, &temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             *record = temp_rec;

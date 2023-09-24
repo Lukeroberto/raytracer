@@ -8,7 +8,8 @@
 color ray_color(ray *r, sphere world[]) {
 
     hit_record rec;
-    if (hit_list(r, world, 0, INFINITY, &rec)) {
+    interval world_int = {.min=0, .max=INFINITY};
+    if (hit_list(r, world, &world_int, &rec)) {
         color norm_color = add(&rec.normal, &((color) {1, 1, 1}));
         return mult(&norm_color, 0.5);
     }
@@ -30,7 +31,7 @@ int main() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
+    int image_width = 1600;
 
     // Calculate image height, ensure at least 1
     int image_height = (int) image_width / aspect_ratio;

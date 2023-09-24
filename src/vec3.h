@@ -31,6 +31,16 @@ vec3 add(vec3 *u, vec3 *v) {
     return ret;
 }
 
+vec3 diff(vec3 *u, vec3 *v) {
+    vec3 ret = {
+        .x = u->x - v->x,
+        .y = u->y - v->y,
+        .z = u->z - v->z
+    };
+
+    return ret;
+}
+
 vec3 mult(vec3 *v, double t) {
     vec3 ret = {
         .x = v->x * t,

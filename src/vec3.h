@@ -2,7 +2,10 @@
 #define VEC3_H
 
 #include<stdio.h>
+#include<stdbool.h>
 #include<math.h>
+
+#include "utils.h"
 
 typedef struct vec3 {
     double x;
@@ -26,6 +29,16 @@ vec3 add(vec3 *u, vec3 *v) {
         .x = u->x + v->x,
         .y = u->y + v->y,
         .z = u->z + v->z
+    };
+
+    return ret;
+}
+
+vec3 add3(vec3 *u, vec3 *v, vec3 *w) {
+    vec3 ret = {
+        .x = u->x + v->x + w->x,
+        .y = u->y + v->y + w->y,
+        .z = u->z + v->z + w->z
     };
 
     return ret;
@@ -78,8 +91,45 @@ vec3 cross(vec3 *u, vec3 *v){
    return ret;
 }
 
-void print_vec(vec3 *v) {
-    printf("vec3: {%f, %f, %f}", v->x, v->y, v->z);
+vec3 random_vec() {
+    vec3 v = {
+        .x = random_double(),
+        .y = random_double(),
+        .z = random_double()
+    };
+    return v;
+}
+
+vec3 random_vec_interval(double min, double max) {
+    vec3 v = {
+        .x = random_double(min, max),
+        .y = random_double(min, max),
+        .z = random_double(min, max)
+    };
+    return v;
+}
+
+vec3 random_in_unit_sphere() {
+    while (true) {
+        vec3 p = random_vec_interval(-1, 1);
+        if (length_squared(&p) < 1) {
+            return p;
+        }
+    }
+}
+
+vec3 random_unit_vector() {
+    vec3 v = random_in_unit_sphere();
+    return unit_vec(&v);
+}
+
+vec3 random_on_hemisphere(vec3 *normal) {
+    vec3 on_unit_sphere = random_unit_vector();
+    if (dot(&on_unit_sphere, normal) > 0.0) {
+        return on_unit_sphere;
+    }
+
+    return invert(&on_unit_sphere);
 }
 
 #endif

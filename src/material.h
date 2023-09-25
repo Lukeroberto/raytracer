@@ -22,6 +22,9 @@ bool scatter_lambertian(material *material, ray *ray_in, hit_record *rec, color 
 bool scatter_metal(material *material, ray *ray_in, hit_record *rec, color *attenuation, ray *scattered) {
     vec3 unit = unit_vec(&ray_in->direction);
     vec3 reflected = reflect(&unit, &rec->normal);
+    vec3 random_unit = random_unit_vector();
+    vec3 fuzzed_unit = mult(&random_unit, material->fuzz);
+    vec3 fuzzed_reflected = add(&reflected, &fuzzed_unit);
     ray scattered_ray = {rec->p, reflected};
 
     *scattered = scattered_ray;

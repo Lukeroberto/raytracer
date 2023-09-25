@@ -25,6 +25,7 @@ typedef enum {
 typedef struct {
     material_type type;
     color albedo;
+    double fuzz;
 } material;
 
 typedef struct {

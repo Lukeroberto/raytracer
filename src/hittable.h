@@ -3,14 +3,7 @@
 
 #include <stdbool.h>
 
-#include "ray.h"
-
-typedef struct {
-    point3 p;
-    vec3 normal;
-    double t;
-    bool front_face;
-} hit_record;
+#include "utils.h"
 
 void set_face_normal(hit_record *record, ray *r, vec3 *outward_normal) {
     // outward normal is assumed to be unit

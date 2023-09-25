@@ -1,9 +1,10 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "color.h"
-#include "hittable.h"
 #include "utils.h"
+
+#include "material.h"
+#include "hittable.h"
 
 typedef struct {
     int image_width, image_height;
@@ -57,11 +58,6 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
         .pixel_delta_u = pixel_delta_u,
         .pixel_delta_v = pixel_delta_v
     };
-
-    // Logging
-    char buff[BUFSIZ];
-    setvbuf(stderr, buff, _IOFBF, BUFSIZ);
-    fprintf(stderr, "Created camera. Image dims (%d, %d), Center (%f, %f, %f)\n", image_width, image_height, center.x, center.y, center.z);
     return camera;
 }
 
@@ -73,13 +69,14 @@ color ray_color(ray *r, int depth, sphere world[]) {
     }
     interval world_int = {.min=0.001, .max=INFINITY};
     if (hit_list(r, world, &world_int, &rec)) {
-        vec3 random_unit = random_unit_vector();
-        vec3 lamb_normal = add(&rec.normal, &random_unit);
-        vec3 direction = random_on_hemisphere(&rec.normal);
-        ray next_hit = {rec.p, direction};
-        color color = ray_color(&next_hit, depth-1, world);
-
-        return mult(&color, 0.5);
+        ray scattered;
+        color attenuation;
+        if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
+            color color = ray_color(&scattered, depth-1, world);
+            return mult_v(&color, &attenuation);
+        }
+        color no_light_gathered = {0, 0, 0};
+        return no_light_gathered;
     }
 
     vec3 unit = unit_vec(&r->direction);

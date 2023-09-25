@@ -11,4 +11,28 @@ double random_double_interval(double min, double max) {
     return min + (max - min) * random_double();
 }
 
+#include "ray.h"
+#include "vec3.h"
+#include "color.h"
+
+// Define some types
+typedef enum {
+    LAMBERTIAN,
+    METAL,
+    DIELECTRIC
+} material_type;
+
+typedef struct {
+    material_type type;
+    color albedo;
+} material;
+
+typedef struct {
+    point3 p;
+    vec3 normal;
+    double t;
+    bool front_face;
+    material mat;
+} hit_record;
+
 #endif

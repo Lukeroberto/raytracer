@@ -54,6 +54,16 @@ vec3 diff(vec3 *u, vec3 *v) {
     return ret;
 }
 
+vec3 mult_v(vec3 *u, vec3 *v) {
+    vec3 ret = {
+        .x = u->x * v->x,
+        .y = u->y * v->y,
+        .z = u->z * v->z
+    };
+
+    return ret;
+}
+
 vec3 mult(vec3 *v, double t) {
     vec3 ret = {
         .x = v->x * t,
@@ -70,6 +80,11 @@ double length_squared(vec3 *v) {
 
 double length(vec3 *v) {
     return sqrt(length_squared(v));
+}
+
+bool near_zero(vec3 *v) {
+    double tol = 1e-8;
+    return (fabs(v->x) < tol) && (fabs(v->y) < tol) && (fabs(v->z) < tol);
 }
 
 vec3 unit_vec(vec3 *v) {
@@ -130,6 +145,13 @@ vec3 random_on_hemisphere(vec3 *normal) {
     }
 
     return invert(&on_unit_sphere);
+}
+
+vec3 reflect(vec3 *v, vec3 *n) {
+    double coeff = -2 * dot(v, n);
+    vec3 overlap = mult(n, coeff);
+
+    return add(v, &overlap);
 }
 
 #endif

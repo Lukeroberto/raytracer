@@ -26,6 +26,7 @@ typedef struct {
     material_type type;
     color albedo;
     double fuzz;
+    double ir;
 } material;
 
 typedef struct {

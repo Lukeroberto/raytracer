@@ -154,4 +154,16 @@ vec3 reflect(vec3 *v, vec3 *n) {
     return add(v, &overlap);
 }
 
+vec3 refract(vec3 *v, vec3 *n, double etai_over_etat) {
+    vec3 iv = invert(v);
+    double cos_theta = fmin(dot(&iv, n), 1.0);
+
+    vec3 cos_n = mult(n, cos_theta);
+    vec3 temp = add(v, &cos_n);
+    vec3 r_out_perp = mult(&temp, etai_over_etat);
+    vec3 r_out_parallel = mult(n, -sqrt(fabs(1.0 - length_squared(&r_out_perp))));
+
+    return add(&r_out_perp, &r_out_parallel);
+}
+
 #endif

@@ -124,6 +124,15 @@ vec3 random_vec_interval(double min, double max) {
     return v;
 }
 
+vec3 random_in_unit_disk() {
+   while (true) {
+       vec3 p = {random_double(-1, 1), random_double(-1, 1), 0}
+       if (length_squared(&p) < 1) {
+           return p
+       }
+   }
+}
+
 vec3 random_in_unit_sphere() {
     while (true) {
         vec3 p = random_vec_interval(-1, 1);

@@ -7,57 +7,82 @@
 #include "hittable.h"
 
 typedef struct {
-    int image_width, image_height;
+    // Passed in
+    int image_width;
     double aspect_ratio;
     int samples_per_pixel;
     int max_depth;
-    
+    double vfov;
+    vec3 vup; // camera-relative "up" direction
+    point3 lookfrom;
+    point3 lookat;
+
+    // Computed
+    int image_height;
+    vec3 u, v, w; // camera frame basis vectors
     point3 center, pixel00_loc;
     vec3 pixel_delta_u, pixel_delta_v;
 } camera;
 
-camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel) {
-    int image_height = (int) image_width / aspect_ratio;
-    image_height = (image_height < 1) ? 1 : image_height;
+camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel, int max_depth, double vfov, point3 lookfrom, point3 lookat, vec3 vup) {
+    camera camera;
 
-    // Camera
-    float focal_length = 1.0;
-    float viewport_height = 2.0;
-    float viewport_width = viewport_height * ((double) image_width / image_height);
-    point3 center = {0, 0, 0};
+    // Config
+    camera.image_width = image_width;
+    camera.aspect_ratio = aspect_ratio;
+    camera.samples_per_pixel = samples_per_pixel;
+    camera.max_depth = max_depth;
+    camera.vfov = vfov;
+    camera.vup = vup;
+    camera.lookfrom = lookfrom;
+    camera.lookat = lookat;
+
+    // Compute height
+    int image_height = (int) image_width / aspect_ratio;
+    camera.image_height = (image_height < 1) ? 1 : image_height;
+
+
+    // Compute viewport, center, and basis vectors
+    vec3 looktowards = diff(&lookfrom, &lookat);
+    double focal_length = length(&looktowards);
+    double theta = degrees_to_radians(vfov);
+    double h = tan(theta/2);
+    double viewport_height = 2.0 * h * focal_length;
+    double viewport_width = viewport_height * ((double) image_width / image_height);
+
+    camera.center = lookfrom;
+    
+    vec3 w = unit_vec(&looktowards);
+    camera.w = w;
+
+    vec3 vup_cross_w = cross(&vup, &w);
+    vec3 u = unit_vec(&vup_cross_w);
+    camera.u = u;
+
+    vec3 v = cross(&w, &u);
+    camera.v = v;
 
     // vectors across the horizontal and down the vertical viewport edges
-    vec3 viewport_u = {viewport_width, 0, 0};
-    vec3 viewport_v = {0, -viewport_height, 0};
+    vec3 viewport_u = mult(&u, viewport_width);
+    vec3 viewport_v = mult(&v, -viewport_height);
 
     // horizontal and vertical deltas from pixel to pixel
-    vec3 pixel_delta_u = mult(&viewport_u, 1.0 / image_width);
-    vec3 pixel_delta_v = mult(&viewport_v, 1.0 / image_height);
+    camera.pixel_delta_u = mult(&viewport_u, 1.0 / image_width);
+    camera.pixel_delta_v = mult(&viewport_v, 1.0 / image_height);
 
-    // Location of upper left pixel
-    vec3 z_focal = {0, 0, -focal_length};
-    vec3 half_viewport_u = mult(&viewport_u, -0.5);
-    vec3 half_viewport_v = mult(&viewport_v, -0.5);
-
-    vec3 view_port_sum = add(&half_viewport_u, &half_viewport_v);
-    vec3 viewport_focal_sum = add(&z_focal, &view_port_sum);
-    vec3 viewport_upper_left = add(&center, &viewport_focal_sum); 
-    vec3 pixel_delta_sum = add(&pixel_delta_u, &pixel_delta_v);
+    vec3 pixel_delta_sum = add(&camera.pixel_delta_u, &camera.pixel_delta_v);
     vec3 scaled_pixel_delta_sum = mult(&pixel_delta_sum, 0.5);
 
-    vec3 pixel00_loc = add(&viewport_upper_left, &scaled_pixel_delta_sum);
+    // Location of upper left pixel
+    vec3 scaled_vp_u = mult(&viewport_u, -0.5);
+    vec3 scaled_vp_v = mult(&viewport_v, -0.5);
+    vec3 scaled_vp_sum = add(&scaled_vp_u, &scaled_vp_v);
 
-    camera camera = {
-        .image_width = image_width,
-        .image_height = image_height,
-        .aspect_ratio = aspect_ratio,
-        .samples_per_pixel = samples_per_pixel,
-        .max_depth = 50,
-        .center = center,
-        .pixel00_loc = pixel00_loc,
-        .pixel_delta_u = pixel_delta_u,
-        .pixel_delta_v = pixel_delta_v
-    };
+    vec3 scaled_focal_length = mult(&w, -focal_length);
+    vec3 viewport_upper_left = add3(&camera.center, &scaled_focal_length, &scaled_vp_sum);
+
+    camera.pixel00_loc = add(&viewport_upper_left, &scaled_pixel_delta_sum);
+
     return camera;
 }
 

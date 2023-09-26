@@ -16,15 +16,18 @@ typedef struct {
     vec3 vup; // camera-relative "up" direction
     point3 lookfrom;
     point3 lookat;
+    double defocus_angle;
+    double focus_dist;
 
     // Computed
     int image_height;
     vec3 u, v, w; // camera frame basis vectors
     point3 center, pixel00_loc;
     vec3 pixel_delta_u, pixel_delta_v;
+    vec3 defocus_disk_u, defocus_disk_v;
 } camera;
 
-camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel, int max_depth, double vfov, point3 lookfrom, point3 lookat, vec3 vup) {
+camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel, int max_depth, double vfov, point3 lookfrom, point3 lookat, vec3 vup, double defocus_angle, double focus_dist) {
     camera camera;
 
     // Config
@@ -36,18 +39,18 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     camera.vup = vup;
     camera.lookfrom = lookfrom;
     camera.lookat = lookat;
+    camera.defocus_angle;
+    camera.focus_dist;
 
     // Compute height
     int image_height = (int) image_width / aspect_ratio;
     camera.image_height = (image_height < 1) ? 1 : image_height;
 
-
     // Compute viewport, center, and basis vectors
     vec3 looktowards = diff(&lookfrom, &lookat);
-    double focal_length = length(&looktowards);
     double theta = degrees_to_radians(vfov);
     double h = tan(theta/2);
-    double viewport_height = 2.0 * h * focal_length;
+    double viewport_height = 2.0 * h * focus_dist;
     double viewport_width = viewport_height * ((double) image_width / image_height);
 
     camera.center = lookfrom;
@@ -78,10 +81,14 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     vec3 scaled_vp_v = mult(&viewport_v, -0.5);
     vec3 scaled_vp_sum = add(&scaled_vp_u, &scaled_vp_v);
 
-    vec3 scaled_focal_length = mult(&w, -focal_length);
+    vec3 scaled_focal_length = mult(&w, -focus_dist);
     vec3 viewport_upper_left = add3(&camera.center, &scaled_focal_length, &scaled_vp_sum);
 
     camera.pixel00_loc = add(&viewport_upper_left, &scaled_pixel_delta_sum);
+
+    double defocus_radius = focus_dist * tan(degrees_to_radians(defocus_angle/2));
+    camera.defocus_disk_u = mult(&u, defocus_radius);
+    camera.defocus_disk_v = mult(&v, defocus_radius);
 
     return camera;
 }
@@ -123,6 +130,14 @@ vec3 pixel_sample_square(camera *camera) {
     return add(&pixel_px, &pixel_py);
 }
 
+point3 defocus_disk_sample(camera *camera) {
+    point3 p = random_in_unit_disk();
+
+    vec3 defocus_p_u = mult(&camera->defocus_disk_u, p.x);
+    vec3 defocus_p_v = mult(&camera->defocus_disk_v, p.y);
+    return add3(&camera->center, &defocus_p_u, &defocus_p_v);
+}
+
 ray get_ray(int i, int j, camera *camera) {
     vec3 pixel_delta_i = mult(&camera->pixel_delta_u, i);
     vec3 pixel_delta_j = mult(&camera->pixel_delta_v, j);
@@ -132,7 +147,7 @@ ray get_ray(int i, int j, camera *camera) {
     vec3 pixel_sample = pixel_sample_square(camera);
     point3 pixel_sample_shifted = add(&pixel_center, &pixel_sample);
 
-    point3 ray_origin = camera->center;
+    point3 ray_origin = (camera->defocus_angle <= 0) ? camera->center : defocus_disk_sample(camera);
     vec3 ray_dir = diff(&pixel_sample_shifted, &ray_origin);
 
     ray ret = {.origin = ray_origin, .direction = ray_dir};

@@ -10,7 +10,7 @@ double degrees_to_radians(double degrees) {
 }
 
 double random_double() {
-    return random() / (RAND_MAX + 1.0);
+    return (double) rand() / ((double) RAND_MAX + 1.0);
 }
 
 double random_double_interval(double min, double max) {

@@ -5,7 +5,7 @@
 
 #include "utils.h"
 
-bool scatter_lambertian(material *material, ray *ray_in, hit_record *rec, color *attenuation, ray *scattered) {
+bool scatter_lambertian(material *material, hit_record *rec, color *attenuation, ray *scattered) {
     vec3 random_unit_vec = random_unit_vector();
     vec3 scatter_direction = add(&rec->normal, &random_unit_vec);
     if (near_zero(&scatter_direction)) {
@@ -25,7 +25,7 @@ bool scatter_metal(material *material, ray *ray_in, hit_record *rec, color *atte
     vec3 random_unit = random_unit_vector();
     vec3 fuzzed_unit = mult(&random_unit, material->fuzz);
     vec3 fuzzed_reflected = add(&reflected, &fuzzed_unit);
-    ray scattered_ray = {rec->p, reflected};
+    ray scattered_ray = {rec->p, fuzzed_reflected};
 
     *scattered = scattered_ray;
     *attenuation = material->albedo;
@@ -66,7 +66,7 @@ bool scatter(material *material, ray *ray_in, hit_record *rec, color *attenuatio
     switch (material->type) {
         bool ret;
         case LAMBERTIAN:
-            ret = scatter_lambertian(material, ray_in, rec, attenuation, scattered);
+            ret = scatter_lambertian(material, rec, attenuation, scattered);
             return ret;
         case METAL:
             ret = scatter_metal(material, ray_in, rec, attenuation, scattered);
@@ -74,8 +74,9 @@ bool scatter(material *material, ray *ray_in, hit_record *rec, color *attenuatio
         case DIELECTRIC:
             ret = scatter_dielectric(material, ray_in, rec, attenuation, scattered);
             return ret;
-
     }
+
+    return false;
 }
 
 

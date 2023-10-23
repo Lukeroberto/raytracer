@@ -42,8 +42,8 @@ int main() {
                     indx++;
                 } else if (choose_mat < 0.90) {
                     // Metal
-                    color albedo = random_vec(0.5, 1);
-                    double fuzz = random_double(0, 0.5);
+                    color albedo = random_vec_interval(0.5, 1);
+                    double fuzz = random_double_interval(0, 0.5);
                     material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
                     world[indx] = make_sphere(center, 0.2, metal_mat);
                     indx++;

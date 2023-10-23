@@ -39,8 +39,8 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     camera.vup = vup;
     camera.lookfrom = lookfrom;
     camera.lookat = lookat;
-    camera.defocus_angle;
-    camera.focus_dist;
+    camera.defocus_angle = defocus_angle;
+    camera.focus_dist = focus_dist;
 
     // Compute height
     int image_height = (int) image_width / aspect_ratio;

@@ -1,7 +1,7 @@
 raytracer : ./src/main.c 
-	gcc -o raytracer ./src/main.c -I./include -lm
+	gcc -o raytracer ./src/main.c -I./include -lm -Wall -Wextra -pedantic-errors -std=c2x
 
-tests : ./src/test.c
+test : ./src/test.c
 	gcc -o test ./src/test.c -I./include -lm
 
 clean : 

@@ -117,16 +117,16 @@ vec3 random_vec() {
 
 vec3 random_vec_interval(double min, double max) {
     vec3 v = {
-        .x = random_double(min, max),
-        .y = random_double(min, max),
-        .z = random_double(min, max)
+        .x = random_double_interval(min, max),
+        .y = random_double_interval(min, max),
+        .z = random_double_interval(min, max)
     };
     return v;
 }
 
 vec3 random_in_unit_disk() {
    while (true) {
-       vec3 p = {random_double(-1, 1), random_double(-1, 1), 0};
+       vec3 p = {random_double_interval(-1, 1), random_double_interval(-1, 1), 0};
        if (length_squared(&p) < 1) {
            return p;
        }

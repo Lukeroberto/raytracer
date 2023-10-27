@@ -32,8 +32,8 @@ int main() {
             double choose_mat = random_double();
             point3 center = {a+0.9*random_double(), 0.2, b + 0.9*random_double()};
 
-            vec3 vec = diff(&center, &(point3) {4, 0.2, 0});
-            if (length(&vec) > 0.9) {
+            vec3 vec = diff(center, (point3) {4, 0.2, 0});
+            if (length(vec) > 0.9) {
                 if (choose_mat < 0.8) {
                     // Diffuse
                     color albedo = random_vec();

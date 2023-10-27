@@ -17,11 +17,11 @@ typedef struct {
 } sphere;
 
 bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
-    vec3 oc = diff(&r->origin, &sphere->center);
+    vec3 oc = diff(r->origin, sphere->center);
 
-    double a = length_squared(&r->direction);
-    double half_b = dot(&oc, &r->direction);
-    double c = length_squared(&oc) - sphere->radius*sphere->radius;
+    double a = length_squared(r->direction);
+    double half_b = dot(oc, r->direction);
+    double c = length_squared(oc) - sphere->radius*sphere->radius;
 
     double discrim = half_b*half_b - a*c;
     if (discrim < 0) return false; 
@@ -39,9 +39,9 @@ bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     rec->t = root;
     rec->p = at(r, rec->t);
 
-    vec3 outward_normal = diff(&rec->p, &sphere->center);
-    outward_normal = mult(&outward_normal, 1.0 / sphere->radius);
-    set_face_normal(rec, r, &outward_normal);
+    vec3 outward_normal = diff(rec->p, sphere->center);
+    outward_normal = mult(outward_normal, 1.0 / sphere->radius);
+    set_face_normal(rec, r, outward_normal);
     rec->mat = sphere->mat;
     
     return true;

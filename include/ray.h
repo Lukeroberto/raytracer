@@ -9,8 +9,8 @@ typedef struct {
 } ray;
 
 point3 at(ray *r, double t) {
-    vec3 scaled_dir = mult(&r->direction, t);
-    return add(&r->origin, &scaled_dir);
+    vec3 scaled_dir = mult(r->direction, t);
+    return add(r->origin, scaled_dir);
 }
 
 #endif

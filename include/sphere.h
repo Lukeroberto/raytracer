@@ -47,12 +47,12 @@ bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     return true;
 }
 
-bool hit_list(ray *r, sphere spheres[], interval *ray_t, hit_record *record) {
+bool hit_list(ray *r, int num_spheres, sphere spheres[], interval *ray_t, hit_record *record) {
     hit_record temp_rec;
     bool hit_anything = false;
     double closest_so_far = ray_t->max;
 
-    for (int i = 0; i < 486; i++) {
+    for (int i = 0; i < num_spheres; i++) {
         interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
         if (hit(r, &spheres[i], &cur_interval, &temp_rec)) {
             hit_anything = true;

@@ -59,7 +59,6 @@ void set_window_pixel(color pixel_color, int samples_per_pixel, int pix_i, int p
 
     SDL_SetRenderDrawColor(renderer, ri, gi, bi, 255);
     SDL_RenderDrawPoint(renderer, pix_i, pix_j);
-    SDL_RenderPresent(renderer);
 }
 
 #endif

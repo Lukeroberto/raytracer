@@ -97,18 +97,18 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     return camera;
 }
 
-color ray_color(ray *r, int depth, sphere world[]) {
+color ray_color(ray *r, int depth, int num_spheres, sphere world[]) {
     hit_record rec;
     if (depth <= 0) {
         color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
     interval world_int = {.min=0.001, .max=INFINITY};
-    if (hit_list(r, world, &world_int, &rec)) {
+    if (hit_list(r, num_spheres, world, &world_int, &rec)) {
         ray scattered;
         color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            color color = ray_color(&scattered, depth-1, world);
+            color color = ray_color(&scattered, depth-1, num_spheres, world);
             return mult_v(color, attenuation);
         }
         color no_light_gathered = {0, 0, 0};
@@ -158,7 +158,7 @@ ray get_ray(int i, int j, camera *camera) {
     return ret;
 }
 
-int render(camera *camera, sphere world[]) {
+int render(camera *camera, int num_spheres, sphere world[]) {
     // Logging
     char buff[BUFSIZ];
     setvbuf(stderr, buff, _IOFBF, BUFSIZ);
@@ -181,12 +181,13 @@ int render(camera *camera, sphere world[]) {
             color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
                 ray r = get_ray(i, j, camera);
-                color ray_c = ray_color(&r, camera->max_depth, world);
+                color ray_c = ray_color(&r, camera->max_depth, num_spheres, world);
                 pixel_color = add(pixel_color, ray_c);
             }
             //write_color(pixel_color, camera->samples_per_pixel);
             set_window_pixel(pixel_color, camera->samples_per_pixel, i, j, renderer);
         }
+        SDL_RenderPresent(renderer);
     }
     fprintf(stderr, "\rDone.                    \n");
 

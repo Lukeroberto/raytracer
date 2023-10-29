@@ -1,11 +1,14 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "color.h"
 #include "utils.h"
 
 #include "material.h"
 #include "hittable.h"
 #include "sphere.h"
+
+#include <SDL2/SDL.h>
 
 typedef struct {
     // Passed in
@@ -155,10 +158,19 @@ ray get_ray(int i, int j, camera *camera) {
     return ret;
 }
 
-void render(camera *camera, sphere world[]) {
+int render(camera *camera, sphere world[]) {
     // Logging
     char buff[BUFSIZ];
     setvbuf(stderr, buff, _IOFBF, BUFSIZ);
+
+    SDL_Renderer *renderer;
+    SDL_Window *window; 
+    SDL_Event event;
+
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_CreateWindowAndRenderer(camera->image_width, camera->image_height, 0, &window, &renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
 
     // Render
     printf("P3\n%d %d\n255\n", camera->image_width, camera->image_height);
@@ -172,10 +184,20 @@ void render(camera *camera, sphere world[]) {
                 color ray_c = ray_color(&r, camera->max_depth, world);
                 pixel_color = add(pixel_color, ray_c);
             }
-            write_color(pixel_color, camera->samples_per_pixel);
+            //write_color(pixel_color, camera->samples_per_pixel);
+            set_window_pixel(pixel_color, camera->samples_per_pixel, i, j, renderer);
         }
     }
     fprintf(stderr, "\rDone.                    \n");
+
+    while (1) {
+        if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
+            break;
+    }
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return EXIT_SUCCESS;
 }
 
 #endif

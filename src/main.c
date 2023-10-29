@@ -1,3 +1,8 @@
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_timer.h>
+#include <SDL2/SDL_video.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5,6 +10,9 @@
 
 #include "sphere.h"
 #include "camera.h"
+
+#include <SDL2/SDL.h>
+
 
 sphere make_sphere(point3 p, double r, material mat) {
     sphere s = {
@@ -16,9 +24,11 @@ sphere make_sphere(point3 p, double r, material mat) {
     return s;
 }
 
+
 int main() {
     char buff[BUFSIZ];
     setvbuf(stderr, buff, _IOFBF, BUFSIZ);
+
 
     // World
     sphere world[500];
@@ -70,9 +80,9 @@ int main() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 1600;
-    int samples_per_pixel = 500;
-    int max_depth = 50;
+    int image_width = 256;
+    int samples_per_pixel = 1;
+    int max_depth = 5;
     double vfov = 20;
     point3 lookfrom = {13, 2, 3};
     point3 lookat = {0, 0, 0};
@@ -93,5 +103,5 @@ int main() {
             focus_dist
     );
 
-    render(&camera, world);
+    return render(&camera, world);
 }

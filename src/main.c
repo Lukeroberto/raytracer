@@ -126,8 +126,8 @@ int three_spheres() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
-    int samples_per_pixel = 30;
+    int image_width = 256;
+    int samples_per_pixel = 1;
     int max_depth = 8;
     double vfov = 20;
     point3 lookfrom = {-2, 2, 1};
@@ -156,6 +156,6 @@ int main() {
     switch (0) {
         case 1: three_spheres(); break;
         case 2: random_spheres(); break;
-        default: three_spheres(); break;
+        default: random_spheres(); break;
     }
 }

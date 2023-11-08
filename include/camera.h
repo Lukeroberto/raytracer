@@ -9,6 +9,8 @@
 #include "sphere.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_video.h>
 
 typedef struct {
     // Passed in

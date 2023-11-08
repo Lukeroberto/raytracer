@@ -1,5 +1,4 @@
-#ifndef VEC3_H
-#define VEC3_H
+#pragma once
 
 #include<stdio.h>
 #include<stdbool.h>
@@ -175,4 +174,3 @@ vec3 refract(vec3 v, vec3 n, double etai_over_etat) {
     return add(r_out_perp, r_out_parallel);
 }
 
-#endif

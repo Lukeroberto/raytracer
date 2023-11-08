@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include<stdlib.h>
 
@@ -43,4 +42,3 @@ typedef struct {
     material mat;
 } hit_record;
 
-#endif

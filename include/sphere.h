@@ -1,12 +1,11 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#pragma once
 
 #include <stdbool.h>
 #include <math.h>
 
 #include "utils.h"
 #include "interval.h"
-
+#include "aabb.h"
 #include "hittable.h"
 #include "material.h"
 
@@ -15,6 +14,13 @@ typedef struct {
     double radius;
     material mat;
 } sphere;
+
+aabb get_aabb_for_sphere(sphere* s) {
+    vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
+    point3 min_pt = diff(s->center, radius_vec);
+    point3 max_pt = add(s->center, radius_vec);
+    return create_aabb_for_point(min_pt, max_pt);
+}
 
 bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     vec3 oc = diff(r->origin, sphere->center);
@@ -63,6 +69,3 @@ bool hit_list(ray *r, int num_spheres, sphere spheres[], interval *ray_t, hit_re
 
     return hit_anything;
 }
-
-#endif
-

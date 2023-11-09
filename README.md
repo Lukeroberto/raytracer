@@ -20,4 +20,9 @@ Final Render shown on the course homepage: ![final](examples/final_render.png)
 
 
 ## Word on getting things realtime
-Final render of course homepage, frame-by-frame realtime (settings turned way down): ![realtime-ish](examples/render.gif)
+Final render of course homepage, frame-by-frame realtime (settings turned way down): 
+
+![realtime-ish](examples/render.gif)
+
+
+This is using SDL2 to create the window and render the image to the frame. Everything else is still custom. Next steps are to implement bounding-volume hierarchies to remove the unnecessary ray bounces being calculated all over the scene. Then adding image smoothing and keyboard inputs after that.

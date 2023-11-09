@@ -19,7 +19,11 @@ Diffuse sphere with lambertian scattering: ![diffuse](examples/diffuse.png)
 Final Render shown on the course homepage: ![final](examples/final_render.png)
 
 
-## Work on getting things realtime
+## Work on getting things realtime + add more features
+
+Some work take from https://raytracing.github.io/books/RayTracingTheNextWeek.html. Otherwise, just random optimizations to make a small interactive environment.
+
+
 Final render of course homepage, frame-by-frame realtime (settings turned way down): 
 
 ![realtime-ish](examples/render.gif)

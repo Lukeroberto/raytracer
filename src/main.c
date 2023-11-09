@@ -12,6 +12,7 @@
 #include "camera.h"
 
 #include <SDL2/SDL.h>
+#include <time.h>
 
 
 sphere make_sphere(point3 p, double r, material mat) {
@@ -113,12 +114,20 @@ int random_spheres() {
     SDL_RenderClear(renderer);
 
     for (int i = 0; i < 500; i++) {
+        clock_t tik = clock();
+        render(&camera, num_spheres, world, renderer);
+        clock_t tok = clock();
+
+        SDL_RenderPresent(renderer);
+
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
             break;
-
-        render(&camera, num_spheres, world, renderer);
-        SDL_RenderPresent(renderer);
         camera.center = diff(camera.center, (vec3) {0.05, 0.00, 0.05});
+        if (tok - tik < CLOCKS_PER_SEC) {
+            printf("%d fps\n",(int) ( CLOCKS_PER_SEC / (float) (tok - tik)));
+        } else {
+            printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
+        }
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -127,10 +136,6 @@ int random_spheres() {
 }
 
 int three_spheres() {
-    char buff[BUFSIZ];
-    setvbuf(stderr, buff, _IOFBF, BUFSIZ);
-
-
     // World
     sphere world[5];
     material ground = {.type=LAMBERTIAN, .albedo=(color) {0.8, 0.8, 0.0}};

@@ -19,7 +19,7 @@ Diffuse sphere with lambertian scattering: ![diffuse](examples/diffuse.png)
 Final Render shown on the course homepage: ![final](examples/final_render.png)
 
 
-## Word on getting things realtime
+## Work on getting things realtime
 Final render of course homepage, frame-by-frame realtime (settings turned way down): 
 
 ![realtime-ish](examples/render.gif)

@@ -80,8 +80,8 @@ int random_spheres() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
-    int samples_per_pixel = 10;
+    int image_width = 256;
+    int samples_per_pixel = 1;
     int max_depth = 5;
     double vfov = 20;
     point3 lookfrom = {13, 2, 3};
@@ -103,7 +103,26 @@ int random_spheres() {
             focus_dist
     );
 
-    return render(&camera, num_spheres, world);
+    SDL_Renderer *renderer;
+    SDL_Window *window; 
+    SDL_Event event;
+
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_CreateWindowAndRenderer(camera.image_width, camera.image_height, 0, &window, &renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    for (int i = 0; i < 500; i++) {
+        if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
+            break;
+
+        render(&camera, num_spheres, world, renderer);
+        SDL_RenderPresent(renderer);
+    }
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return EXIT_SUCCESS;
 }
 
 int three_spheres() {
@@ -126,9 +145,9 @@ int three_spheres() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 256;
+    int image_width = 400;
     int samples_per_pixel = 1;
-    int max_depth = 8;
+    int max_depth = 5;
     double vfov = 20;
     point3 lookfrom = {-2, 2, 1};
     point3 lookat = {0, 0, -1};
@@ -149,7 +168,7 @@ int three_spheres() {
             focus_dist
     );
 
-    return render(&camera, 5, world);
+    return render(&camera, 5, world, NULL);
 }
 
 int main() {

@@ -3,7 +3,8 @@ Raytracer written in c.
 Taken from https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 
-Examples:
+
+## Early work from the course:
 
 Diffuse sphere with lambertian scattering: ![diffuse](examples/diffuse.png)
 
@@ -16,3 +17,7 @@ Diffuse sphere with lambertian scattering: ![diffuse](examples/diffuse.png)
 3 spheres adjusting field of view for a zoom effect: ![fov](examples/camera_zoom.png)
 
 Final Render shown on the course homepage: ![final](examples/final_render.png)
+
+
+## Word on getting things realtime
+Final render of course homepage, frame-by-frame realtime (settings turned way down): ![realtime-ish](examples/render.gif)

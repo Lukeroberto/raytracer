@@ -118,6 +118,7 @@ int random_spheres() {
 
         render(&camera, num_spheres, world, renderer);
         SDL_RenderPresent(renderer);
+        camera.center = diff(camera.center, (vec3) {0.05, 0.00, 0.05});
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

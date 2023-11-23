@@ -81,7 +81,7 @@ int random_spheres() {
 
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 256;
+    int image_width = 1080;
     int samples_per_pixel = 1;
     int max_depth = 5;
     double vfov = 20;
@@ -113,7 +113,7 @@ int random_spheres() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 50; i++) {
         clock_t tik = clock();
         render(&camera, num_spheres, world, renderer);
         clock_t tok = clock();

@@ -1,0 +1,18 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-I./include",
+      "-O3",
+      "-g",
+      "-ffast-math",
+      "-o",
+      "raytracer",
+      "./src/main.c"
+    ],
+    "directory": "/home/luke/projects/raytracer",
+    "file": "/home/luke/projects/raytracer/src/main.c",
+    "output": "/home/luke/projects/raytracer/raytracer"
+  }
+]

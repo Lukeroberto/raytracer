@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bvh.h"
 #include "utils.h"
 
 #include "sphere.h"
@@ -18,23 +19,23 @@
 
 int random_spheres() {
     // World
-    sphere world[500];
+    sphere sphere_list[500];
 
     int num_spheres = 0;
     material ground_material = {.type=LAMBERTIAN, .albedo=(color) {0.5, 0.5, 0.5}};
-    world[0] = make_sphere((point3) {0, -1000, 0}, 1000, ground_material);
+    sphere_list[0] = make_sphere((point3) {0, -1000, 0}, 1000, ground_material);
     num_spheres++;
 
     material mat1 = {.type=DIELECTRIC, .ir=1.5};
-    world[num_spheres] = make_sphere((point3) {0, 1, 0}, 1.0, mat1);
+    sphere_list[num_spheres] = make_sphere((point3) {0, 1, 0}, 1.0, mat1);
     num_spheres++;
 
     material mat2 = {.type=LAMBERTIAN, .albedo=(color) {0.4, 0.2, 0.1}};
-    world[num_spheres] = make_sphere((point3) {-4, 1, 0}, 1.0, mat2);
+    sphere_list[num_spheres] = make_sphere((point3) {-4, 1, 0}, 1.0, mat2);
     num_spheres++;
 
     material mat3 = {.type=METAL, .albedo=(color) {0.7, 0.6, 0.5}, .fuzz=0.0};
-    world[num_spheres] = make_sphere((point3) {4, 1, 0}, 1.0, mat3);
+    sphere_list[num_spheres] = make_sphere((point3) {4, 1, 0}, 1.0, mat3);
     num_spheres++;
 
     for (int a = -11; a < 11; a++) {
@@ -48,30 +49,27 @@ int random_spheres() {
                     // Diffuse
                     color albedo = random_vec();
                     material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
-                    world[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
                     num_spheres++;
                 } else if (choose_mat < 0.90) {
                     // Metal
                     color albedo = random_vec_interval(0.5, 1);
                     double fuzz = random_double_interval(0, 0.5);
                     material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
-                    world[num_spheres] = make_sphere(center, 0.2, metal_mat);
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, metal_mat);
                     num_spheres++;
                 } else {
                     // Glass
                     material glass_mat = {.type=DIELECTRIC, .ir=1.5};
-                    world[num_spheres] = make_sphere(center, 0.2, glass_mat);
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, glass_mat);
                     num_spheres++;
                 }
             }
         }
     }
 
-    aabb bbox = create_aabb_for_array_sphere(world, num_spheres);
-    printf("World: %d objects, ", num_spheres); print_aabb(&bbox); 
-
     // Image
-    float aspect_ratio = 16.0 / 9.0;
+    double aspect_ratio = 16.0 / 9.0;
     int image_width = 720;
     int samples_per_pixel = 1;
     int max_depth = 5;
@@ -104,9 +102,11 @@ int random_spheres() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
+    bvh_node* world = build_bvh(sphere_list, 0, num_spheres);
     for (int i = 0; i < 3; i++) {
         clock_t tik = clock();
-        render(&camera, num_spheres, world, renderer);
+        render(&camera, num_spheres, sphere_list, renderer);
+        //render_bvh(&camera, world, renderer);
         clock_t tok = clock();
 
         SDL_RenderPresent(renderer);
@@ -120,10 +120,17 @@ int random_spheres() {
             printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
         }
     }
+
+
+    // Cleanup bvh 
+    free_bvh(world);
+    world = NULL;
+    
     while (true) {
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
             break;
     }
+    
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -132,20 +139,20 @@ int random_spheres() {
 
 int three_spheres() {
     // World
-    sphere world[5];
+    sphere sphere_list[5];
     material ground = {.type=LAMBERTIAN, .albedo=(color) {0.8, 0.8, 0.0}};
     material mat_center = {.type=LAMBERTIAN, .albedo=(color) {0.1, 0.2, 0.5}};
     material mat_left = {.type=DIELECTRIC, .ir=1.5};
     material mat_right = {.type=METAL, .albedo=(color) {0.8, 0.6, 0.2}, .fuzz=0.0};
 
-    world[0] = make_sphere((point3) { 0.0, -100.5, -1.0}, 100.0, ground);
-    world[1] = make_sphere((point3) { 0.0,    0.0, -1.0},   0.5, mat_center);
-    world[2] = make_sphere((point3) {-1.0,    0.0, -1.0},   0.5, mat_left);
-    world[3] = make_sphere((point3) {-1.0,    0.0, -1.0},  -0.4, mat_left);
-    world[4] = make_sphere((point3) { 1.0,    0.0, -1.0},   0.5, mat_right);
+    sphere_list[0] = make_sphere((point3) { 0.0, -100.5, -1.0}, 100.0, ground);
+    sphere_list[1] = make_sphere((point3) { 0.0,    0.0, -1.0},   0.5, mat_center);
+    sphere_list[2] = make_sphere((point3) {-1.0,    0.0, -1.0},   0.5, mat_left);
+    sphere_list[3] = make_sphere((point3) {-1.0,    0.0, -1.0},  -0.4, mat_left);
+    sphere_list[4] = make_sphere((point3) { 1.0,    0.0, -1.0},   0.5, mat_right);
 
     // Image
-    float aspect_ratio = 16.0 / 9.0;
+    double aspect_ratio = 16.0 / 9.0;
     int image_width = 400;
     int samples_per_pixel = 1;
     int max_depth = 5;
@@ -169,7 +176,7 @@ int three_spheres() {
             focus_dist
     );
 
-    return render(&camera, 5, world, NULL);
+    return render(&camera, 5, sphere_list, NULL);
 }
 
 int main() {

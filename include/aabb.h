@@ -82,10 +82,10 @@ bool hit_aabb_axis(ray *ray, interval ray_t, aabb *bbox, int axis_n) {
 
 bool hit_aabb(ray *ray, interval ray_t, aabb *bbox) {
     for (int a = 0; a < 3; a++) {
-        if (!hit_aabb_axis(ray, ray_t, bbox, a)) {
-            return false;
+        if (hit_aabb_axis(ray, ray_t, bbox, a)) {
+            return true;
         }
     }
 
-    return true;
+    return false;
 }

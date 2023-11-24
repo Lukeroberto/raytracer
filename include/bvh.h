@@ -1,42 +1,89 @@
 #pragma once
 
-#include <stdint.h>
-
-#include "sphere.h"
-#include "vec3.h"
 #include "aabb.h"
+#include "sphere.h"
+#include <stdlib.h>
 
 typedef struct bvh_node {
-    vec3 aabb_min, aabb_max;
-    uint8_t left_indx, first_indx, obj_count;
-
+    struct bvh_node *left;
+    struct bvh_node *right;
+    aabb bbox;
+    sphere *sphere;
 } bvh_node;
 
-bool is_leaf(bvh_node *node) {return node->obj_count > 0;}
-
-void update_node_bounds(int node_id, bvh_node **tree, int tree_size);
-void subdivide_tree(int node_id, bvh_node **tree, int tree_size);
-
-void build_bvh(bvh_node **tree, int tree_size, sphere world[], int world_size) {
-    uint8_t root_node_i = 0;
-    uint8_t nodes_used = 1;
-
-    bvh_node *root = tree[root_node_i];
-    root->left_indx = 0;
-    root->first_indx = 0;
-    root->obj_count = world_size;
-    update_node_bounds(root_node_i, tree, tree_size);
-    subdivide_tree(root_node_i, tree, tree_size);
+void print_bvh(bvh_node *node, int level) {
+    for (int i = 0; i < level; i++) {
+        printf("\t");
+    }
+    printf("Node level %d: ", level); print_aabb(&node->bbox);
+    if (node->left != NULL) {
+        print_bvh(node->left, level + 1);
+    } 
+    if (node->right != NULL) {
+        print_bvh(node->right, level + 1);
+    }
 }
 
-void ray_hit_bvh(ray *ray, interval ray_t, int node_idx, bvh_node **tree) {
-    bvh_node *node = tree[node_idx];
-    if (!hit_aabb(ray, ray_t, NULL)) {
-        return;
+// TODO: Implement a memory pool to keep number scene objects fixed
+bvh_node* allocate_bvh();
+
+void free_bvh(bvh_node *node) {
+    if (node == NULL) {
+        return; // Base case: node is null
     }
-    if (is_leaf(node)) {
+
+    // Recursively free left and right subtrees
+    free_bvh(node->left);
+    free_bvh(node->right);
+
+    // If your BVH nodes contain dynamically allocated memory, free it here
+    // For example, if you have dynamically allocated AABBs:
+    // free(node->bbox);
+
+    // Finally, free the node itself
+    free(node);
+}
+
+bvh_node* build_bvh(sphere spheres[], int start, int end) {
+    if (start == end) {
+        // Create a leaf node
+        bvh_node* leaf = (bvh_node*)malloc(sizeof(bvh_node));
+        leaf->sphere = &spheres[start];
+        leaf->bbox = create_aabb_for_sphere(leaf->sphere); 
+        leaf->left = leaf->right = NULL;
+        return leaf;
     } else {
-        ray_hit_bvh(ray, ray_t, node->left_indx, tree);
-        ray_hit_bvh(ray, ray_t, node->left_indx + 1, tree);
+        // Split spheres and create internal node
+        int mid = (start + end) / 2;
+        bvh_node* node = (bvh_node*)malloc(sizeof(bvh_node));
+        node->left = build_bvh(spheres, start, mid);
+        node->right = build_bvh(spheres, mid + 1, end);
+        node->bbox = create_aabb_for_aabb(&node->left->bbox, &node->right->bbox); 
+        node->sphere = NULL;
+        return node;
     }
 }
+
+bool ray_intersect_bvh(bvh_node *node, ray *ray, interval ray_t, hit_record *record) {
+    if (node == NULL) {
+        return false;
+    }
+
+    // Check for ray intersection with the node's AABB
+    if (!hit_aabb(ray, ray_t, &node->bbox)) {
+        return false; // Ray does not intersect the bounding box
+    }
+
+    // Check if this is a leaf node
+    if (node->left == NULL && node->right == NULL && node->sphere != NULL) {
+        // Test intersection with the sphere at this leaf node
+        return hit(ray, node->sphere, &ray_t, record);
+    }
+
+    // If not a leaf node, recursively check children
+    bool hitLeft = node->left ? ray_intersect_bvh(node->left, ray, ray_t, record) : false;
+    bool hitRight = node->right ? ray_intersect_bvh(node->right, ray, ray_t, record) : false;
+
+    return hitLeft || hitRight;
+}
+

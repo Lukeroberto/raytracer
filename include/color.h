@@ -84,9 +84,9 @@ void set_window_pixel(color pixel_color, int samples_per_pixel, int pix_i, int p
     b = linear_to_gamma(b);
 
     interval intensity = {.min=0.000, .max=0.999};
-    int ri = 256 * clamp(&intensity, r);
-    int gi = 256 * clamp(&intensity, g);
-    int bi = 256 * clamp(&intensity, b);
+    Uint8 ri = (Uint8) (256.0 * clamp(&intensity, r));
+    Uint8 gi = (Uint8) (256.0 * clamp(&intensity, g));
+    Uint8 bi = (Uint8) (256.0 * clamp(&intensity, b));
 
     //int w, h;
     //SDL_GetRendererOutputSize(renderer, &w, &h);

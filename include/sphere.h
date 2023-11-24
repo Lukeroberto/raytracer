@@ -15,12 +15,36 @@ typedef struct {
     material mat;
 } sphere;
 
-aabb get_aabb_for_sphere(sphere* s) {
+void print_sphere(sphere *sphere) {
+    printf("sphere: (center[%f, %f, %f], r[%f], material[%d])\n", sphere->center.x, sphere->center.y, sphere->center.z, sphere->radius, sphere->mat.type);
+}
+
+sphere make_sphere(point3 p, double r, material mat) {
+    sphere s = {
+        .center = p,
+        .radius = r,
+        .mat = mat
+    };
+    return s;
+}
+
+aabb create_aabb_for_sphere(sphere* s) {
     vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
     point3 min_pt = diff(s->center, radius_vec);
     point3 max_pt = add(s->center, radius_vec);
     return create_aabb_for_point(min_pt, max_pt);
 }
+
+aabb create_aabb_for_array_sphere(sphere spheres[], int num_spheres) {
+    aabb bbox = create_empty_aabb();
+    for (int i = 0; i < num_spheres; i++) {
+        aabb sphere_box = create_aabb_for_sphere(&spheres[i]);
+        bbox = create_aabb_for_aabb(&bbox, &sphere_box);
+    }
+
+    return bbox;
+}
+
 
 bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     vec3 oc = diff(r->origin, sphere->center);

@@ -15,15 +15,6 @@
 #include <time.h>
 
 
-sphere make_sphere(point3 p, double r, material mat) {
-    sphere s = {
-        .center = p,
-        .radius = r,
-        .mat = mat
-    };
-    //fprintf(stderr, "Created sphere at (%f, %f, %f), size %f, type: %d, color (%f, %f, %f), fuzz: %f, ir: %f\n", s.center.x, s.center.y, s.center.z, s.radius, s.mat.type, s.mat.albedo.x, s.mat.albedo.y, s.mat.albedo.z, s.mat.fuzz, s.mat.ir);
-    return s;
-}
 
 int random_spheres() {
     // World
@@ -76,6 +67,9 @@ int random_spheres() {
         }
     }
 
+    aabb bbox = create_aabb_for_array_sphere(world, num_spheres);
+    printf("World: %d objects, ", num_spheres); print_aabb(&bbox); 
+
     // Image
     float aspect_ratio = 16.0 / 9.0;
     int image_width = 720;
@@ -110,7 +104,7 @@ int random_spheres() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 3; i++) {
         clock_t tik = clock();
         render(&camera, num_spheres, world, renderer);
         clock_t tok = clock();
@@ -125,6 +119,10 @@ int random_spheres() {
         } else {
             printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
         }
+    }
+    while (true) {
+        if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
+            break;
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

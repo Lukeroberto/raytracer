@@ -14,6 +14,7 @@ typedef struct vec3 {
 
 typedef vec3 point3;
 
+
 vec3 invert(vec3 v) {
     vec3 ret = {
         .x = -v.x,

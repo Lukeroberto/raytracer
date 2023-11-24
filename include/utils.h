@@ -8,7 +8,7 @@ double degrees_to_radians(double degrees) {
     return degrees * pi / 180.0;
 }
 
-static unsigned int g_seed = 1;
+static unsigned int g_seed = 11;
 
 // Used to seed the generator.           
 //inline void fast_srand(int seed) {

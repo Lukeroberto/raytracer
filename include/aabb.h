@@ -9,6 +9,10 @@ typedef struct {
     interval z;
 } aabb;
 
+void print_aabb(aabb *bbox) {
+    printf("bbox: (x[%f, %f], y[%f, %f], z[%f, %f])\n", bbox->x.min, bbox->x.max, bbox->y.min, bbox->y.max, bbox->z.min, bbox->z.max);
+}
+
 aabb create_empty_aabb() {
     return (aabb){0};
 }

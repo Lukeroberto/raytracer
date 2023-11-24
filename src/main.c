@@ -26,17 +26,26 @@ sphere make_sphere(point3 p, double r, material mat) {
 }
 
 int random_spheres() {
-    char buff[BUFSIZ];
-    setvbuf(stderr, buff, _IOFBF, BUFSIZ);
-
-
     // World
     sphere world[500];
 
+    int num_spheres = 0;
     material ground_material = {.type=LAMBERTIAN, .albedo=(color) {0.5, 0.5, 0.5}};
     world[0] = make_sphere((point3) {0, -1000, 0}, 1000, ground_material);
+    num_spheres++;
 
-    int num_spheres = 1;
+    material mat1 = {.type=DIELECTRIC, .ir=1.5};
+    world[num_spheres] = make_sphere((point3) {0, 1, 0}, 1.0, mat1);
+    num_spheres++;
+
+    material mat2 = {.type=LAMBERTIAN, .albedo=(color) {0.4, 0.2, 0.1}};
+    world[num_spheres] = make_sphere((point3) {-4, 1, 0}, 1.0, mat2);
+    num_spheres++;
+
+    material mat3 = {.type=METAL, .albedo=(color) {0.7, 0.6, 0.5}, .fuzz=0.0};
+    world[num_spheres] = make_sphere((point3) {4, 1, 0}, 1.0, mat3);
+    num_spheres++;
+
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             double choose_mat = random_double();
@@ -67,21 +76,9 @@ int random_spheres() {
         }
     }
 
-    material mat1 = {.type=DIELECTRIC, .ir=1.5};
-    world[num_spheres] = make_sphere((point3) {0, 1, 0}, 1.0, mat1);
-    num_spheres++;
-
-    material mat2 = {.type=LAMBERTIAN, .albedo=(color) {0.4, 0.2, 0.1}};
-    world[num_spheres] = make_sphere((point3) {-4, 1, 0}, 1.0, mat2);
-    num_spheres++;
-
-    material mat3 = {.type=METAL, .albedo=(color) {0.7, 0.6, 0.5}, .fuzz=0.0};
-    world[num_spheres] = make_sphere((point3) {4, 1, 0}, 1.0, mat3);
-    num_spheres++;
-
     // Image
     float aspect_ratio = 16.0 / 9.0;
-    int image_width = 1080;
+    int image_width = 720;
     int samples_per_pixel = 1;
     int max_depth = 5;
     double vfov = 20;
@@ -122,7 +119,7 @@ int random_spheres() {
 
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
             break;
-        camera.center = diff(camera.center, (vec3) {0.05, 0.00, 0.05});
+        camera.center = diff(camera.center, (vec3) {0.05, -0.001, -0.05});
         if (tok - tik < CLOCKS_PER_SEC) {
             printf("%d fps\n",(int) ( CLOCKS_PER_SEC / (float) (tok - tik)));
         } else {

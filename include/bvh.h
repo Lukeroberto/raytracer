@@ -49,6 +49,28 @@ void analyze_depth(bvh_node *node, int currentDepth, int *maxDepth, int *totalLe
     analyze_depth(node->right, currentDepth + 1, maxDepth, totalLeaves, depthSum);
 }
 
+// Function to calculate the overlap volume between two AABBs
+double overlap_volume(aabb a, aabb b) {
+    double dx = fmin(a.x.max, b.x.max) - fmax(a.x.min, b.x.min);
+    double dy = fmin(a.y.max, b.y.max) - fmax(a.y.min, b.y.min);
+    double dz = fmin(a.z.max, b.z.max) - fmax(a.z.min, b.z.min);
+
+    if (dx > 0 && dy > 0 && dz > 0) {
+        return dx * dy * dz; // Positive overlap in all dimensions
+    }
+    return 0; // No overlap
+}
+
+// Recursive function to calculate the total overlap volume in the BVH
+double calculate_total_overlap(bvh_node *node) {
+    if (node == NULL || node->left == NULL || node->right == NULL) {
+        return 0; // Base case: no overlap if node or its children are NULL
+    }
+
+    double overlap = overlap_volume(node->left->bbox, node->right->bbox);
+    return overlap + calculate_total_overlap(node->left) + calculate_total_overlap(node->right);
+}
+
 // TODO: Implement a memory pool to keep number scene objects fixed
 bvh_node* allocate_bvh();
 
@@ -60,10 +82,6 @@ void free_bvh(bvh_node *node) {
     // Recursively free left and right subtrees
     free_bvh(node->left);
     free_bvh(node->right);
-
-    // If your BVH nodes contain dynamically allocated memory, free it here
-    // For example, if you have dynamically allocated AABBs:
-    // free(node->bbox);
 
     // Finally, free the node itself
     free(node);

@@ -12,6 +12,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
 typedef struct {
@@ -203,7 +204,6 @@ int render(camera *camera, int num_spheres, sphere world[], SDL_Renderer *render
                 color ray_c = ray_color(&r, camera->max_depth, num_spheres, world);
                 pixel_color = add(pixel_color, ray_c);
             }
-            //write_color(pixel_color, camera->samples_per_pixel);
             set_window_pixel(pixel_color, camera->samples_per_pixel, i, j, renderer);
         }
     }
@@ -211,7 +211,7 @@ int render(camera *camera, int num_spheres, sphere world[], SDL_Renderer *render
     return EXIT_SUCCESS;
 }
 
-int render_bvh(camera *camera, bvh_node *bvh, SDL_Renderer *renderer) {
+int render_bvh(camera *camera, bvh_node *bvh, SDL_Surface *surface) {
     // Render
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
@@ -221,8 +221,7 @@ int render_bvh(camera *camera, bvh_node *bvh, SDL_Renderer *renderer) {
                 color ray_c = ray_color_bvh(&r, camera->max_depth, bvh);
                 pixel_color = add(pixel_color, ray_c);
             }
-            //write_color(pixel_color, camera->samples_per_pixel);
-            set_window_pixel(pixel_color, camera->samples_per_pixel, i, j, renderer);
+            set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
         }
     }
 

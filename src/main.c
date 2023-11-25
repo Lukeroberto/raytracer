@@ -15,35 +15,9 @@
 #include <SDL2/SDL.h>
 #include <time.h>
 
-#include <math.h>
+#define IMAGE_WIDTH 720
 
-// Function to calculate the overlap volume between two AABBs
-double overlap_volume(aabb a, aabb b) {
-    double dx = fmin(a.x.max, b.x.max) - fmax(a.x.min, b.x.min);
-    double dy = fmin(a.y.max, b.y.max) - fmax(a.y.min, b.y.min);
-    double dz = fmin(a.z.max, b.z.max) - fmax(a.z.min, b.z.min);
-
-    if (dx > 0 && dy > 0 && dz > 0) {
-        return dx * dy * dz; // Positive overlap in all dimensions
-    }
-    return 0; // No overlap
-}
-
-// Recursive function to calculate the total overlap volume in the BVH
-double calculate_total_overlap(bvh_node *node) {
-    if (node == NULL || node->left == NULL || node->right == NULL) {
-        return 0; // Base case: no overlap if node or its children are NULL
-    }
-
-    double overlap = overlap_volume(node->left->bbox, node->right->bbox);
-    return overlap + calculate_total_overlap(node->left) + calculate_total_overlap(node->right);
-}
-
-// Usage:
-// double totalOverlap = calculate_total_overlap(rootNode);
-
-
-int random_spheres() {
+bvh_node* random_spheres(int max_spheres) {
     // World
     sphere sphere_list[500];
 
@@ -93,20 +67,23 @@ int random_spheres() {
             }
         }
     }
+    return build_bvh(sphere_list, 0, max_spheres);
+}
 
+void get_random_spheres_camera(vec3 lookfrom_delta, camera *camera) {
     // Image
     double aspect_ratio = 16.0 / 9.0;
-    int image_width = 480;
-    int samples_per_pixel = 1;
+    int image_width = IMAGE_WIDTH;
+    int samples_per_pixel = 3;
     int max_depth = 5;
     double vfov = 20;
-    point3 lookfrom = {13, 2, 3};
+    point3 lookfrom = add((vec3) {13, 2, 3}, lookfrom_delta);
     point3 lookat = {0, 0, 0};
     vec3 vup = {0, 1, 0};
     double defocus_angle = 0.6;
     double focus_dist = 10.0;
 
-    camera camera = create_camera(
+    *camera = create_camera(
             image_width, 
             aspect_ratio, 
             samples_per_pixel,
@@ -118,139 +95,12 @@ int random_spheres() {
             defocus_angle,
             focus_dist
     );
-
-    SDL_Renderer *renderer;
-    SDL_Window *window; 
-    SDL_Event event;
-
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_CreateWindowAndRenderer(camera.image_width, camera.image_height, 0, &window, &renderer);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-
-    bvh_node* world = build_bvh(sphere_list, 0, 3);
-    double overlap = calculate_total_overlap(world);
-    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
-    //print_bvh(world, 0);
-    int quit = 0;
-    while (!quit) {
-        //render(&camera, num_spheres, sphere_list, renderer);
-        //render_bvh(&camera, world, renderer);
-        //SDL_RenderPresent(renderer);
-
-        while (SDL_PollEvent(&event)) {
-            clock_t tik = clock();
-            switch( event.type ){
-                /* Keyboard event */
-                /* Pass the event data onto PrintKeyInfo() */
-                case SDL_KEYDOWN:
-                    switch( event.key.keysym.sym ){
-                        case SDLK_LEFT:
-                            lookfrom = diff(camera.center, (vec3) {-0.1, 0.0, 0.0});
-                            camera = create_camera(
-                                    image_width, 
-                                    aspect_ratio, 
-                                    samples_per_pixel,
-                                    max_depth,
-                                    vfov,
-                                    lookfrom,
-                                    lookat,
-                                    vup,
-                                    defocus_angle,
-                                    focus_dist
-                            );
-                            render_bvh(&camera, world, renderer);
-                            SDL_RenderPresent(renderer);
-                            break;
-                        case SDLK_RIGHT:
-                            lookfrom = diff(camera.center, (vec3) {0.1, 0.0, 0.0});
-                            camera = create_camera(
-                                    image_width, 
-                                    aspect_ratio, 
-                                    samples_per_pixel,
-                                    max_depth,
-                                    vfov,
-                                    lookfrom,
-                                    lookat,
-                                    vup,
-                                    defocus_angle,
-                                    focus_dist
-                            );
-                            render_bvh(&camera, world, renderer);
-                            SDL_RenderPresent(renderer);
-                            break;
-                        case SDLK_UP:
-                            lookfrom = diff(camera.center, (vec3) {0.0, 0.0, 0.1});
-                            camera = create_camera(
-                                    image_width, 
-                                    aspect_ratio, 
-                                    samples_per_pixel,
-                                    max_depth,
-                                    vfov,
-                                    lookfrom,
-                                    lookat,
-                                    vup,
-                                    defocus_angle,
-                                    focus_dist
-                            );
-                            render_bvh(&camera, world, renderer);
-                            SDL_RenderPresent(renderer);
-                            break;
-                        case SDLK_DOWN:
-                            lookfrom = diff(camera.center, (vec3) {0.0, 0.0, -0.1});
-                            camera = create_camera(
-                                    image_width, 
-                                    aspect_ratio, 
-                                    samples_per_pixel,
-                                    max_depth,
-                                    vfov,
-                                    lookfrom,
-                                    lookat,
-                                    vup,
-                                    defocus_angle,
-                                    focus_dist
-                            );
-                            render_bvh(&camera, world, renderer);
-                            SDL_RenderPresent(renderer);
-                            break;
-                        default:
-                            break;
-                    }
-                    clock_t tok = clock();
-                    printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
-                    break;
-
-                /* SDL_QUIT event (window close) */
-                case SDL_QUIT:
-                    quit = 1;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        //camera.center = diff(camera.center, (vec3) {0.05, -0.001, -0.05});
-        //if (tok - tik < CLOCKS_PER_SEC) {
-        //    printf("%d fps\n",(int) ( CLOCKS_PER_SEC / (float) (tok - tik)));
-        //} else {
-        //    printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
-        // }
-    }
-
-
-    // Cleanup bvh 
-    free_bvh(world);
-    world = NULL;
-    
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return EXIT_SUCCESS;
 }
 
-int three_spheres() {
+
+
+sphere* three_spheres_world_arr(sphere sphere_list[]) {
     // World
-    sphere sphere_list[5];
     material ground = {.type=LAMBERTIAN, .albedo=(color) {0.8, 0.8, 0.0}};
     material mat_center = {.type=LAMBERTIAN, .albedo=(color) {0.1, 0.2, 0.5}};
     material mat_left = {.type=DIELECTRIC, .ir=1.5};
@@ -262,9 +112,14 @@ int three_spheres() {
     sphere_list[3] = make_sphere((point3) {-1.0,    0.0, -1.0},  -0.4, mat_left);
     sphere_list[4] = make_sphere((point3) { 1.0,    0.0, -1.0},   0.5, mat_right);
 
+    return sphere_list;
+}
+
+camera three_spheres_camera() {
+
     // Image
     double aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
+    int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 1;
     int max_depth = 5;
     double vfov = 20;
@@ -274,7 +129,7 @@ int three_spheres() {
     double defocus_angle = 10.0;
     double focus_dist = 3.4;
 
-    camera camera = create_camera(
+    return create_camera(
             image_width, 
             aspect_ratio, 
             samples_per_pixel,
@@ -286,14 +141,72 @@ int three_spheres() {
             defocus_angle,
             focus_dist
     );
-
-    return render(&camera, 5, sphere_list, NULL);
 }
 
 int main() {
-    switch (0) {
-        case 1: three_spheres(); break;
-        case 2: random_spheres(); break;
-        default: random_spheres(); break;
+    bvh_node* world = random_spheres(3);
+    camera camera;
+    get_random_spheres_camera((vec3) {0.0, 0.0, 0.0}, &camera);
+
+    // Setup SDL objects
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
+    SDL_Surface * surface = SDL_GetWindowSurface(window);
+
+    double overlap = calculate_total_overlap(world);
+    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
+
+    // Run until user quits
+    int quit = 0;
+    SDL_Event event;
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            clock_t tik = clock();
+            switch( event.type ){
+                case SDL_KEYDOWN:
+                    switch( event.key.keysym.sym ){
+                        case SDLK_LEFT:
+                            get_random_spheres_camera((vec3) {-0.1, 0.0, 0.0}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_RIGHT:
+                            get_random_spheres_camera((vec3) {0.1, 0.0, 0.0}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_UP:
+                            get_random_spheres_camera((vec3) {0.0, 0.0, 0.1}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_DOWN:
+                            get_random_spheres_camera((vec3) {0.0, 0.0, -0.1}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        default:
+                            break;
+                    }
+                    clock_t tok = clock();
+                    printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
+                    break;
+
+                case SDL_QUIT:
+                    quit = 1;
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
+
+
+    // Cleanup 
+    free_bvh(world);
+    SDL_FreeSurface(surface);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return EXIT_SUCCESS;
 }

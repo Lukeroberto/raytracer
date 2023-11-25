@@ -13,11 +13,17 @@
 
 typedef vec3 color;
 
+typedef struct color_int {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} color_int;
+
 double linear_to_gamma(double linear_component) {
     return sqrt(linear_component);
 }
 
-void write_color(color pixel_color, int samples_per_pixel) {
+color_int process_color(color pixel_color, int samples_per_pixel) {
     double r = pixel_color.x;
     double g = pixel_color.y;
     double b = pixel_color.z;
@@ -33,69 +39,32 @@ void write_color(color pixel_color, int samples_per_pixel) {
     b = linear_to_gamma(b);
 
     interval intensity = {.min=0.000, .max=0.999};
-    printf("%d %d %d\n", 
-            (int) (256 * clamp(&intensity, r)),
-            (int) (256 * clamp(&intensity, g)),
-            (int) (256 * clamp(&intensity, b)));
+    return (color_int) {
+        .r = (Uint8) (256.0 * clamp(&intensity, r)),
+        .g = (Uint8) (256.0 * clamp(&intensity, g)),
+        .b = (Uint8) (256.0 * clamp(&intensity, b)),
+    };
 }
 
-SDL_Color read_color(SDL_Surface* pSurface, SDL_Renderer* render, int x, int y) {
-    SDL_Color pixColor = {0};
-    SDL_RenderReadPixels(render, NULL, SDL_PIXELFORMAT_RGB888, pSurface->pixels, pSurface->pitch);
-	const Uint8 getPixel_bpp = pSurface->format->BytesPerPixel;
-	Uint16* pPixel = (Uint16*)pSurface->pixels + y * pSurface->pitch + x * getPixel_bpp;
-	Uint32 pixelData = {0};
-
-	switch (getPixel_bpp) {
-	case 1:
-		pixelData = *pPixel;
-		break;
-	case 2:
-		pixelData = *(Uint16*)pPixel;
-		break;
-	case 3:
-		if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-			pixelData = pPixel[0] << 16 | pPixel[1] << 8 | pPixel[2];
-		else
-			pixelData = pPixel[0]| pPixel[1] << 8 | pPixel[2] << 16;
-		break;
-	case 4:
-		pixelData = *(Uint32*)pPixel;
-		break;
-	}
-
-	SDL_GetRGBA(pixelData, pSurface->format, &pixColor.r, &pixColor.g, &pixColor.b, &pixColor.a);
-    return pixColor;
+void write_color(color pixel_color, int samples_per_pixel) {
+    color_int pixel_int = process_color(pixel_color, samples_per_pixel);
+    printf("%d %d %d\n", pixel_int.r, pixel_int.g, pixel_int.b);
 }
 
 void set_window_pixel(color pixel_color, int samples_per_pixel, int pix_i, int pix_j, SDL_Renderer *renderer) {
-    double r = pixel_color.x;
-    double g = pixel_color.y;
-    double b = pixel_color.z;
-
-    double scale = 1.0 / samples_per_pixel;
-    r *= scale;
-    b *= scale;
-    g *= scale;
-
-    // Apply linear -> gamma transform
-    r = linear_to_gamma(r);
-    g = linear_to_gamma(g);
-    b = linear_to_gamma(b);
-
-    interval intensity = {.min=0.000, .max=0.999};
-    Uint8 ri = (Uint8) (256.0 * clamp(&intensity, r));
-    Uint8 gi = (Uint8) (256.0 * clamp(&intensity, g));
-    Uint8 bi = (Uint8) (256.0 * clamp(&intensity, b));
-
-    //int w, h;
-    //SDL_GetRendererOutputSize(renderer, &w, &h);
-    //SDL_Surface* pSurf = SDL_CreateRGBSurface(0, w,h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
-    //SDL_Color color_old = read_color(pSurf, renderer, pix_i, pix_j);
-
-    //SDL_SetRenderDrawColor(renderer, (int) (0.5*(ri + color_old.r)),(int)  (0.5*(gi + color_old.g)), (int) (0.5*(bi+color_old.b)), 255);
-    SDL_SetRenderDrawColor(renderer, ri, gi, bi, 255);
+    color_int pixel_int = process_color(pixel_color, samples_per_pixel);
+    SDL_SetRenderDrawColor(renderer, pixel_int.r, pixel_int.g, pixel_int.b, 255);
     SDL_RenderDrawPoint(renderer, pix_i, pix_j);
+}
+
+#define AVERAGE(a, b)   ( ((((a) ^ (b)) & 0xfefefefeL) >> 1) + ((a) & (b)) )
+
+void set_pixel_buffer(color pixel_color, int samples_per_pixel, size_t loc, SDL_Surface *surface) {
+    color_int pixel_int = process_color(pixel_color, samples_per_pixel);
+    unsigned int *pixels = surface->pixels;
+    Uint32 pixel = SDL_MapRGBA(surface->format, pixel_int.r, pixel_int.g, pixel_int.b, 255);
+    pixels[loc] = pixel;
+    //pixels[loc] = AVERAGE(pixel, pixels[loc]);
 }
 
 #endif

@@ -134,13 +134,12 @@ int random_spheres() {
     //print_bvh(world, 0);
     int quit = 0;
     while (!quit) {
-        //clock_t tik = clock();
         //render(&camera, num_spheres, sphere_list, renderer);
         //render_bvh(&camera, world, renderer);
-        //clock_t tok = clock();
         //SDL_RenderPresent(renderer);
 
         while (SDL_PollEvent(&event)) {
+            clock_t tik = clock();
             switch( event.type ){
                 /* Keyboard event */
                 /* Pass the event data onto PrintKeyInfo() */
@@ -217,6 +216,8 @@ int random_spheres() {
                         default:
                             break;
                     }
+                    clock_t tok = clock();
+                    printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
                     break;
 
                 /* SDL_QUIT event (window close) */

@@ -15,6 +15,32 @@
 #include <SDL2/SDL.h>
 #include <time.h>
 
+#include <math.h>
+
+// Function to calculate the overlap volume between two AABBs
+double overlap_volume(aabb a, aabb b) {
+    double dx = fmin(a.x.max, b.x.max) - fmax(a.x.min, b.x.min);
+    double dy = fmin(a.y.max, b.y.max) - fmax(a.y.min, b.y.min);
+    double dz = fmin(a.z.max, b.z.max) - fmax(a.z.min, b.z.min);
+
+    if (dx > 0 && dy > 0 && dz > 0) {
+        return dx * dy * dz; // Positive overlap in all dimensions
+    }
+    return 0; // No overlap
+}
+
+// Recursive function to calculate the total overlap volume in the BVH
+double calculate_total_overlap(bvh_node *node) {
+    if (node == NULL || node->left == NULL || node->right == NULL) {
+        return 0; // Base case: no overlap if node or its children are NULL
+    }
+
+    double overlap = overlap_volume(node->left->bbox, node->right->bbox);
+    return overlap + calculate_total_overlap(node->left) + calculate_total_overlap(node->right);
+}
+
+// Usage:
+// double totalOverlap = calculate_total_overlap(rootNode);
 
 
 int random_spheres() {
@@ -41,7 +67,7 @@ int random_spheres() {
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             double choose_mat = random_double();
-            point3 center = {a+0.9*random_double(), 0.2, b + 0.9*random_double()};
+            point3 center = {a+ 0.9*random_double(), 0.2, b + 0.9*random_double()};
 
             vec3 vec = diff(center, (point3) {4, 0.2, 0});
             if (length(vec) > 0.9) {
@@ -70,8 +96,8 @@ int random_spheres() {
 
     // Image
     double aspect_ratio = 16.0 / 9.0;
-    int image_width = 720;
-    int samples_per_pixel = 1;
+    int image_width = 1080;
+    int samples_per_pixel = 3;
     int max_depth = 5;
     double vfov = 20;
     point3 lookfrom = {13, 2, 3};
@@ -103,10 +129,13 @@ int random_spheres() {
     SDL_RenderClear(renderer);
 
     bvh_node* world = build_bvh(sphere_list, 0, num_spheres);
-    for (int i = 0; i < 3; i++) {
+    double overlap = calculate_total_overlap(world);
+    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
+    //print_bvh(world, 0);
+    for (int i = 0; i < 2; i++) {
         clock_t tik = clock();
-        render(&camera, num_spheres, sphere_list, renderer);
-        //render_bvh(&camera, world, renderer);
+        //render(&camera, num_spheres, sphere_list, renderer);
+        render_bvh(&camera, world, renderer);
         clock_t tok = clock();
 
         SDL_RenderPresent(renderer);
@@ -125,11 +154,6 @@ int random_spheres() {
     // Cleanup bvh 
     free_bvh(world);
     world = NULL;
-    
-    while (true) {
-        if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
-            break;
-    }
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

@@ -54,5 +54,6 @@ typedef struct {
     double t;
     bool front_face;
     material mat;
+    int num_tests;
 } hit_record;
 

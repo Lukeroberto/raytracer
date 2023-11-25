@@ -45,17 +45,21 @@ interval get_axis_from_aabb(aabb *bbox, int n) {
 bool hit_aabb_axis(ray *ray, interval ray_t, aabb *bbox, int axis_n) {
     double ray_dir;
     double orig_axis;
-    if (axis_n == 0) {
-        ray_dir = ray->direction.x;
-        orig_axis = ray->origin.x;
+    switch (axis_n) {
+        case 0:
+            ray_dir = ray->direction.x;
+            orig_axis = ray->origin.x;
+            break;
 
-    } else if (axis_n == 1) {
-        ray_dir = ray->direction.y;
-        orig_axis = ray->origin.y;
+        case 1: 
+            ray_dir = ray->direction.y;
+            orig_axis = ray->origin.y;
+            break;
 
-    } else {
-        ray_dir = ray->direction.z;
-        orig_axis = ray->origin.z;
+        case 2:
+            ray_dir = ray->direction.z;
+            orig_axis = ray->origin.z;
+            break;
     }
 
     double invDir = 1 / ray_dir;
@@ -64,7 +68,6 @@ bool hit_aabb_axis(ray *ray, interval ray_t, aabb *bbox, int axis_n) {
     double t0 = (intvl.min - orig_axis) * invDir;
     double t1 = (intvl.max - orig_axis) * invDir;
 
-    // Swap??
     if (invDir < 0) {
         double temp = t0;
         t0 = t1;

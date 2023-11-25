@@ -102,7 +102,7 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
 }
 
 color ray_color(ray *r, int depth, int num_spheres, sphere world[]) {
-    hit_record rec;
+    hit_record rec = {0};
     if (depth <= 0) {
         color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
@@ -130,7 +130,7 @@ color ray_color(ray *r, int depth, int num_spheres, sphere world[]) {
 }
 
 color ray_color_bvh(ray *r, int depth, bvh_node *bvh) {
-    hit_record rec;
+    hit_record rec = {0};
     if (depth <= 0) {
         color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
@@ -142,6 +142,7 @@ color ray_color_bvh(ray *r, int depth, bvh_node *bvh) {
         color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
             color color = ray_color_bvh(&scattered, depth-1, bvh);
+            //printf("ray checks in bvh: %d", rec.num_tests);
             return mult_v(color, attenuation);
         }
         color no_light_gathered = {0, 0, 0};
@@ -184,7 +185,8 @@ ray get_ray(int i, int j, camera *camera) {
     vec3 pixel_sample = pixel_sample_square(camera);
     point3 pixel_sample_shifted = add(pixel_center, pixel_sample);
 
-    point3 ray_origin = (camera->defocus_angle <= 0) ? camera->center : defocus_disk_sample(camera);
+    //point3 ray_origin = (camera->defocus_angle <= 0) ? camera->center : defocus_disk_sample(camera);
+    point3 ray_origin = camera->center;
     vec3 ray_dir = diff(pixel_sample_shifted, ray_origin);
 
     ray ret = {.origin = ray_origin, .direction = ray_dir};

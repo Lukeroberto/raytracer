@@ -78,7 +78,7 @@ bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
 }
 
 bool hit_list(ray *r, int num_spheres, sphere spheres[], interval *ray_t, hit_record *record) {
-    hit_record temp_rec;
+    hit_record temp_rec = {0};
     bool hit_anything = false;
     double closest_so_far = ray_t->max;
 
@@ -91,5 +91,6 @@ bool hit_list(ray *r, int num_spheres, sphere spheres[], interval *ray_t, hit_re
         }
     }
 
+    record->num_tests += num_spheres;
     return hit_anything;
 }

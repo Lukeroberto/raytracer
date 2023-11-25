@@ -96,8 +96,8 @@ int random_spheres() {
 
     // Image
     double aspect_ratio = 16.0 / 9.0;
-    int image_width = 1080;
-    int samples_per_pixel = 3;
+    int image_width = 480;
+    int samples_per_pixel = 1;
     int max_depth = 5;
     double vfov = 20;
     point3 lookfrom = {13, 2, 3};
@@ -128,26 +128,112 @@ int random_spheres() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    bvh_node* world = build_bvh(sphere_list, 0, num_spheres);
+    bvh_node* world = build_bvh(sphere_list, 0, 3);
     double overlap = calculate_total_overlap(world);
     printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
     //print_bvh(world, 0);
-    for (int i = 0; i < 2; i++) {
-        clock_t tik = clock();
+    int quit = 0;
+    while (!quit) {
+        //clock_t tik = clock();
         //render(&camera, num_spheres, sphere_list, renderer);
-        render_bvh(&camera, world, renderer);
-        clock_t tok = clock();
+        //render_bvh(&camera, world, renderer);
+        //clock_t tok = clock();
+        //SDL_RenderPresent(renderer);
 
-        SDL_RenderPresent(renderer);
+        while (SDL_PollEvent(&event)) {
+            switch( event.type ){
+                /* Keyboard event */
+                /* Pass the event data onto PrintKeyInfo() */
+                case SDL_KEYDOWN:
+                    switch( event.key.keysym.sym ){
+                        case SDLK_LEFT:
+                            lookfrom = diff(camera.center, (vec3) {-0.1, 0.0, 0.0});
+                            camera = create_camera(
+                                    image_width, 
+                                    aspect_ratio, 
+                                    samples_per_pixel,
+                                    max_depth,
+                                    vfov,
+                                    lookfrom,
+                                    lookat,
+                                    vup,
+                                    defocus_angle,
+                                    focus_dist
+                            );
+                            render_bvh(&camera, world, renderer);
+                            SDL_RenderPresent(renderer);
+                            break;
+                        case SDLK_RIGHT:
+                            lookfrom = diff(camera.center, (vec3) {0.1, 0.0, 0.0});
+                            camera = create_camera(
+                                    image_width, 
+                                    aspect_ratio, 
+                                    samples_per_pixel,
+                                    max_depth,
+                                    vfov,
+                                    lookfrom,
+                                    lookat,
+                                    vup,
+                                    defocus_angle,
+                                    focus_dist
+                            );
+                            render_bvh(&camera, world, renderer);
+                            SDL_RenderPresent(renderer);
+                            break;
+                        case SDLK_UP:
+                            lookfrom = diff(camera.center, (vec3) {0.0, 0.0, 0.1});
+                            camera = create_camera(
+                                    image_width, 
+                                    aspect_ratio, 
+                                    samples_per_pixel,
+                                    max_depth,
+                                    vfov,
+                                    lookfrom,
+                                    lookat,
+                                    vup,
+                                    defocus_angle,
+                                    focus_dist
+                            );
+                            render_bvh(&camera, world, renderer);
+                            SDL_RenderPresent(renderer);
+                            break;
+                        case SDLK_DOWN:
+                            lookfrom = diff(camera.center, (vec3) {0.0, 0.0, -0.1});
+                            camera = create_camera(
+                                    image_width, 
+                                    aspect_ratio, 
+                                    samples_per_pixel,
+                                    max_depth,
+                                    vfov,
+                                    lookfrom,
+                                    lookat,
+                                    vup,
+                                    defocus_angle,
+                                    focus_dist
+                            );
+                            render_bvh(&camera, world, renderer);
+                            SDL_RenderPresent(renderer);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
 
-        if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
-            break;
-        camera.center = diff(camera.center, (vec3) {0.05, -0.001, -0.05});
-        if (tok - tik < CLOCKS_PER_SEC) {
-            printf("%d fps\n",(int) ( CLOCKS_PER_SEC / (float) (tok - tik)));
-        } else {
-            printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
+                /* SDL_QUIT event (window close) */
+                case SDL_QUIT:
+                    quit = 1;
+                    break;
+
+                default:
+                    break;
+            }
         }
+        //camera.center = diff(camera.center, (vec3) {0.05, -0.001, -0.05});
+        //if (tok - tik < CLOCKS_PER_SEC) {
+        //    printf("%d fps\n",(int) ( CLOCKS_PER_SEC / (float) (tok - tik)));
+        //} else {
+        //    printf("%d seconds/frame\n",(int) ( (float) (tok - tik) / CLOCKS_PER_SEC));
+        // }
     }
 
 

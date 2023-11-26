@@ -1,16 +1,13 @@
-#ifndef RAY_H
-#define RAY_H
+# pragma once
 
 #include "vec3.h"
 
 typedef struct {
-    point3 origin;
-    vec3 direction;
+    Point3 origin;
+    Vec3 direction;
 } ray;
 
-point3 at(ray *r, double t) {
-    vec3 scaled_dir = mult(r->direction, t);
-    return add(r->origin, scaled_dir);
+Point3 at(ray *r, double t) {
+    Vec3 scaled_dir = scale_vec3(r->direction, t);
+    return add_vec3(r->origin, scaled_dir);
 }
-
-#endif

@@ -10,7 +10,7 @@
 #include "material.h"
 
 typedef struct {
-    point3 center;
+    Point3 center;
     double radius;
     material mat;
 } sphere;
@@ -19,7 +19,7 @@ void print_sphere(sphere *sphere) {
     printf("sphere: (center[%f, %f, %f], r[%f], material[%d])\n", sphere->center.x, sphere->center.y, sphere->center.z, sphere->radius, sphere->mat.type);
 }
 
-sphere make_sphere(point3 p, double r, material mat) {
+sphere make_sphere(Point3 p, double r, material mat) {
     sphere s = {
         .center = p,
         .radius = r,
@@ -29,9 +29,9 @@ sphere make_sphere(point3 p, double r, material mat) {
 }
 
 aabb create_aabb_for_sphere(sphere* s) {
-    vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
-    point3 min_pt = diff(s->center, radius_vec);
-    point3 max_pt = add(s->center, radius_vec);
+    Vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
+    Point3 min_pt = diff_vec3(s->center, radius_vec);
+    Point3 max_pt = add_vec3(s->center, radius_vec);
     return create_aabb_for_point(min_pt, max_pt);
 }
 
@@ -47,7 +47,7 @@ aabb create_aabb_for_array_sphere(sphere spheres[], int num_spheres) {
 
 
 bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
-    vec3 oc = diff(r->origin, sphere->center);
+    Vec3 oc = diff_vec3(r->origin, sphere->center);
 
     double a = length_squared(r->direction);
     double half_b = dot(oc, r->direction);
@@ -69,8 +69,8 @@ bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     rec->t = root;
     rec->p = at(r, rec->t);
 
-    vec3 outward_normal = diff(rec->p, sphere->center);
-    outward_normal = mult(outward_normal, 1.0 / sphere->radius);
+    Vec3 outward_normal = diff_vec3(rec->p, sphere->center);
+    outward_normal = scale_vec3(outward_normal, 1.0 / sphere->radius);
     set_face_normal(rec, r, outward_normal);
     rec->mat = sphere->mat;
     

@@ -17,7 +17,7 @@ aabb create_empty_aabb() {
     return (aabb){0};
 }
 
-aabb create_aabb_for_point(point3 a, point3 b) {
+aabb create_aabb_for_point(Point3 a, Point3 b) {
     aabb bbox = {
         .x = (interval) {.min=fmin(a.x, b.x), .max=fmax(a.x, b.x)},
         .y = (interval) {.min=fmax(a.y, b.y), .max=fmax(a.y, b.y)},

@@ -11,7 +11,7 @@
 #include "vec3.h"
 #include "interval.h"
 
-typedef vec3 color;
+typedef Vec3 color;
 
 typedef struct color_int {
     uint8_t r;

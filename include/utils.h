@@ -49,8 +49,8 @@ typedef struct {
 } material;
 
 typedef struct {
-    point3 p;
-    vec3 normal;
+    Point3 p;
+    Vec3 normal;
     double t;
     bool front_face;
     material mat;

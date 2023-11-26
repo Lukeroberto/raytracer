@@ -18,6 +18,78 @@
 
 #define IMAGE_WIDTH 720
 
+BvhNode* create_random_spheres(int max_spheres);
+void update_camera(Vec3 delta, Camera *camera);
+
+
+int main() {
+    BvhNode* world = create_random_spheres(3);
+    Camera camera;
+    update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
+
+    // Setup SDL objects
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
+    SDL_Surface * surface = SDL_GetWindowSurface(window);
+
+    double overlap = calculate_total_overlap(world);
+    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
+
+    // Run until user quits
+    int quit = 0;
+    SDL_Event event;
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            clock_t tik = clock();
+            switch( event.type ){
+                case SDL_KEYDOWN:
+                    switch( event.key.keysym.sym ){
+                        case SDLK_LEFT:
+                            update_camera((Vec3) {-0.1, 0.0, 0.0}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_RIGHT:
+                            update_camera((Vec3) {0.1, 0.0, 0.0}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_UP:
+                            update_camera((Vec3) {0.0, 0.0, 0.1}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        case SDLK_DOWN:
+                            update_camera((Vec3) {0.0, 0.0, -0.1}, &camera);
+                            render_bvh(&camera, world, surface);
+                            SDL_UpdateWindowSurface(window);
+                            break;
+                        default:
+                            break;
+                    }
+                    clock_t tok = clock();
+                    printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
+                    break;
+
+                case SDL_QUIT:
+                    quit = 1;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+
+    // Cleanup 
+    free_bvh(world);
+    SDL_FreeSurface(surface);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return EXIT_SUCCESS;
+}
+
 BvhNode* create_random_spheres(int max_spheres) {
     // World
     Sphere sphere_list[500];
@@ -142,70 +214,3 @@ Camera create_three_spheres_camera() {
     );
 }
 
-int main() {
-    BvhNode* world = create_random_spheres(3);
-    Camera camera;
-    update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
-
-    // Setup SDL objects
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
-    SDL_Surface * surface = SDL_GetWindowSurface(window);
-
-    double overlap = calculate_total_overlap(world);
-    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
-
-    // Run until user quits
-    int quit = 0;
-    SDL_Event event;
-    while (!quit) {
-        while (SDL_PollEvent(&event)) {
-            clock_t tik = clock();
-            switch( event.type ){
-                case SDL_KEYDOWN:
-                    switch( event.key.keysym.sym ){
-                        case SDLK_LEFT:
-                            update_camera((Vec3) {-0.1, 0.0, 0.0}, &camera);
-                            render_bvh(&camera, world, surface);
-                            SDL_UpdateWindowSurface(window);
-                            break;
-                        case SDLK_RIGHT:
-                            update_camera((Vec3) {0.1, 0.0, 0.0}, &camera);
-                            render_bvh(&camera, world, surface);
-                            SDL_UpdateWindowSurface(window);
-                            break;
-                        case SDLK_UP:
-                            update_camera((Vec3) {0.0, 0.0, 0.1}, &camera);
-                            render_bvh(&camera, world, surface);
-                            SDL_UpdateWindowSurface(window);
-                            break;
-                        case SDLK_DOWN:
-                            update_camera((Vec3) {0.0, 0.0, -0.1}, &camera);
-                            render_bvh(&camera, world, surface);
-                            SDL_UpdateWindowSurface(window);
-                            break;
-                        default:
-                            break;
-                    }
-                    clock_t tok = clock();
-                    printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
-                    break;
-
-                case SDL_QUIT:
-                    quit = 1;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-    }
-
-
-    // Cleanup 
-    free_bvh(world);
-    SDL_FreeSurface(surface);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return EXIT_SUCCESS;
-}

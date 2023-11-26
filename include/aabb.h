@@ -9,7 +9,7 @@ typedef struct AABB{
     Interval z;
 } AABB;
 
-void print_aabb(AABB *bbox) {
+void print_aabb(const AABB *bbox) {
     printf("bbox: (x[%f, %f], y[%f, %f], z[%f, %f])\n", bbox->x.min, bbox->x.max, bbox->y.min, bbox->y.max, bbox->z.min, bbox->z.max);
 }
 
@@ -27,7 +27,7 @@ AABB create_aabb_for_point(Point3 a, Point3 b) {
     return bbox;
 }
 
-AABB create_aabb_for_aabb(AABB *a, AABB *b) {
+AABB create_aabb_for_aabb(const AABB *a, const AABB *b) {
    return (AABB) {
         .x = create_from_interval(a->x, b->x),
         .y = create_from_interval(a->y, b->y),
@@ -35,14 +35,14 @@ AABB create_aabb_for_aabb(AABB *a, AABB *b) {
    };
 }
 
-Interval get_axis_from_aabb(AABB *bbox, int n) {
+Interval get_axis_from_aabb(const AABB *bbox, int n) {
     if (n == 1) return bbox->y;
     if (n == 2) return bbox->z;
 
     return bbox->x;
 }
 
-bool hit_aabb_axis(Ray *ray, Interval ray_t, AABB *bbox, int axis_n) {
+bool hit_aabb_axis(const Ray *ray, Interval ray_t, const AABB *bbox, int axis_n) {
     double ray_dir;
     double orig_axis;
     switch (axis_n) {
@@ -83,7 +83,7 @@ bool hit_aabb_axis(Ray *ray, Interval ray_t, AABB *bbox, int axis_n) {
     return true;
 }
 
-bool hit_aabb(Ray *ray, Interval ray_t, AABB *bbox) {
+bool hit_aabb(const Ray *ray, Interval ray_t, const AABB *bbox) {
     for (int a = 0; a < 3; a++) {
         if (hit_aabb_axis(ray, ray_t, bbox, a)) {
             return true;

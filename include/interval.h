@@ -15,15 +15,15 @@ Interval create_from_interval(Interval a, Interval b) {
     return (Interval) {.min = fmin(a.min, b.min), .max = fmax(a.max, b.max)};
 }
 
-bool contains(Interval *i, double x) {
+bool contains(const Interval *i, double x) {
     return i->min <= x && x <= i->max;
 }
 
-bool surrounds(Interval *i, double x) {
+bool surrounds(const Interval *i, double x) {
     return i->min < x && x < i->max;
 }
 
-double clamp(Interval *i, double x) {
+double clamp(const Interval *i, double x) {
     if (x < i->min) return i->min;
     if (x > i->max) return i->max;
 

@@ -9,10 +9,10 @@ typedef struct BvhNode {
     struct BvhNode *left;
     struct BvhNode *right;
     AABB bbox;
-    Sphere *sphere;
+    const Sphere *sphere;
 } BvhNode;
 
-void print_bvh(BvhNode *node, int level) {
+void print_bvh(const BvhNode *node, int level) {
     for (int i = 0; i < level; i++) {
         printf("\t");
     }
@@ -25,7 +25,7 @@ void print_bvh(BvhNode *node, int level) {
     }
 }
 
-int count_bvh(BvhNode *node) {
+int count_bvh(const BvhNode *node) {
     if (node == NULL) {
         return 0;
     }
@@ -35,7 +35,7 @@ int count_bvh(BvhNode *node) {
     return 1 + l + r;
 }
 
-void analyze_depth(BvhNode *node, int currentDepth, int *maxDepth, int *totalLeaves, int *depthSum) {
+void analyze_depth(const BvhNode *node, int currentDepth, int *maxDepth, int *totalLeaves, int *depthSum) {
     if (node == NULL) return;
 
     if (node->left == NULL && node->right == NULL) {
@@ -63,7 +63,7 @@ double overlap_volume(AABB a, AABB b) {
 }
 
 // Recursive function to calculate the total overlap volume in the BVH
-double calculate_total_overlap(BvhNode *node) {
+double calculate_total_overlap(const BvhNode *node) {
     if (node == NULL || node->left == NULL || node->right == NULL) {
         return 0; // Base case: no overlap if node or its children are NULL
     }
@@ -121,7 +121,7 @@ int compare_sphere(const void *a, const void *b) {
     else return 0;
 }
 
-BvhNode* build_bvh_recursive(Sphere spheres[], int start, int end, int depth) {
+BvhNode* build_bvh_recursive(const Sphere spheres[], int start, int end, int depth) {
     if (start == end) {
         // Create a leaf node
         BvhNode* leaf = (BvhNode*)malloc(sizeof(BvhNode));
@@ -148,7 +148,7 @@ BvhNode* build_bvh(Sphere spheres[], int start, int end) {
     return build_bvh_recursive(spheres, start, end, 0);
 }
 
-bool ray_intersect_bvh(BvhNode *node, Ray *ray, Interval ray_t, HitRecord *record) {
+bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitRecord *record) {
     if (node == NULL) {
         return false;
     }

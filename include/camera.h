@@ -100,7 +100,7 @@ Camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     return camera;
 }
 
-Color ray_color(Ray *r, int depth, int num_spheres, Sphere world[]) {
+Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[]) {
     HitRecord rec = {0};
     if (depth <= 0) {
         Color no_light_gathered = {0, 0, 0};

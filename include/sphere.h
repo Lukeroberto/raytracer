@@ -14,7 +14,7 @@ typedef struct Sphere {
     Material mat;
 } Sphere;
 
-void print_Sphere(Sphere *sphere) {
+void print_Sphere(const Sphere *sphere) {
     printf("sphere: (center[%f, %f, %f], r[%f], material[%d])\n", sphere->center.x, sphere->center.y, sphere->center.z, sphere->radius, sphere->mat.type);
 }
 
@@ -27,14 +27,14 @@ Sphere make_sphere(Point3 p, double r, Material mat) {
     return s;
 }
 
-AABB create_aabb_for_sphere(Sphere* s) {
+AABB create_aabb_for_sphere(const Sphere* s) {
     Vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
     Point3 min_pt = diff_vec3(s->center, radius_vec);
     Point3 max_pt = add_vec3(s->center, radius_vec);
     return create_aabb_for_point(min_pt, max_pt);
 }
 
-AABB create_aabb_for_array_sphere(Sphere spheres[], int num_spheres) {
+AABB create_aabb_for_array_sphere(const Sphere spheres[], int num_spheres) {
     AABB bbox = create_empty_aabb();
     for (int i = 0; i < num_spheres; i++) {
         AABB sphere_box = create_aabb_for_sphere(&spheres[i]);
@@ -45,7 +45,7 @@ AABB create_aabb_for_array_sphere(Sphere spheres[], int num_spheres) {
 }
 
 
-bool hit(Ray *r, Sphere *sphere, Interval *ray_t, HitRecord *rec) {
+bool hit(const Ray *r, const Sphere *sphere, const Interval *ray_t, HitRecord *rec) {
     Vec3 oc = diff_vec3(r->origin, sphere->center);
 
     double a = length_squared(r->direction);
@@ -76,7 +76,7 @@ bool hit(Ray *r, Sphere *sphere, Interval *ray_t, HitRecord *rec) {
     return true;
 }
 
-bool hit_list(Ray *r, int num_spheres, Sphere spheres[], Interval *ray_t, HitRecord *record) {
+bool hit_list(const Ray *r, int num_spheres, const Sphere spheres[], const Interval *ray_t, HitRecord *record) {
     HitRecord temp_rec = {0};
     bool hit_anything = false;
     double closest_so_far = ray_t->max;

@@ -8,6 +8,7 @@
 
 #include "bvh.h"
 #include "utils.h"
+#include "types.h"
 
 #include "sphere.h"
 #include "camera.h"
@@ -17,24 +18,24 @@
 
 #define IMAGE_WIDTH 720
 
-bvh_node* create_random_spheres(int max_spheres) {
+BvhNode* create_random_spheres(int max_spheres) {
     // World
-    sphere sphere_list[500];
+    Sphere sphere_list[500];
 
     int num_spheres = 0;
-    material ground_material = {.type=LAMBERTIAN, .albedo=(color) {0.5, 0.5, 0.5}};
+    Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
     sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
     num_spheres++;
 
-    material mat1 = {.type=DIELECTRIC, .ir=1.5};
+    Material mat1 = {.type=DIELECTRIC, .ir=1.5};
     sphere_list[num_spheres] = make_sphere((Point3) {0, 1, 0}, 1.0, mat1);
     num_spheres++;
 
-    material mat2 = {.type=LAMBERTIAN, .albedo=(color) {0.4, 0.2, 0.1}};
+    Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
     sphere_list[num_spheres] = make_sphere((Point3) {-4, 1, 0}, 1.0, mat2);
     num_spheres++;
 
-    material mat3 = {.type=METAL, .albedo=(color) {0.7, 0.6, 0.5}, .fuzz=0.0};
+    Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
     sphere_list[num_spheres] = make_sphere((Point3) {4, 1, 0}, 1.0, mat3);
     num_spheres++;
 
@@ -47,20 +48,20 @@ bvh_node* create_random_spheres(int max_spheres) {
             if (length(vec) > 0.9) {
                 if (choose_mat < 0.8) {
                     // Diffuse
-                    color albedo = random_vec();
-                    material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
+                    Color albedo = random_vec();
+                    Material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
                     sphere_list[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
                     num_spheres++;
                 } else if (choose_mat < 0.90) {
                     // Metal
-                    color albedo = random_vec_interval(0.5, 1);
+                    Color albedo = random_vec_interval(0.5, 1);
                     double fuzz = random_double_interval(0, 0.5);
-                    material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
+                    Material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
                     sphere_list[num_spheres] = make_sphere(center, 0.2, metal_mat);
                     num_spheres++;
                 } else {
                     // Glass
-                    material glass_mat = {.type=DIELECTRIC, .ir=1.5};
+                    Material glass_mat = {.type=DIELECTRIC, .ir=1.5};
                     sphere_list[num_spheres] = make_sphere(center, 0.2, glass_mat);
                     num_spheres++;
                 }
@@ -70,7 +71,7 @@ bvh_node* create_random_spheres(int max_spheres) {
     return build_bvh(sphere_list, 0, max_spheres);
 }
 
-void update_camera(Vec3 lookfrom_delta, camera *camera) {
+void update_camera(Vec3 lookfrom_delta, Camera *camera) {
     // Image
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
@@ -97,12 +98,12 @@ void update_camera(Vec3 lookfrom_delta, camera *camera) {
     );
 }
 
-sphere* create_three_spheres_world_arr(sphere sphere_list[]) {
+Sphere* create_three_spheres_world_arr(Sphere sphere_list[]) {
     // World
-    material ground = {.type=LAMBERTIAN, .albedo=(color) {0.8, 0.8, 0.0}};
-    material mat_center = {.type=LAMBERTIAN, .albedo=(color) {0.1, 0.2, 0.5}};
-    material mat_left = {.type=DIELECTRIC, .ir=1.5};
-    material mat_right = {.type=METAL, .albedo=(color) {0.8, 0.6, 0.2}, .fuzz=0.0};
+    Material ground = {.type=LAMBERTIAN, .albedo=(Color) {0.8, 0.8, 0.0}};
+    Material mat_center = {.type=LAMBERTIAN, .albedo=(Color) {0.1, 0.2, 0.5}};
+    Material mat_left = {.type=DIELECTRIC, .ir=1.5};
+    Material mat_right = {.type=METAL, .albedo=(Color) {0.8, 0.6, 0.2}, .fuzz=0.0};
 
     sphere_list[0] = make_sphere((Point3) { 0.0, -100.5, -1.0}, 100.0, ground);
     sphere_list[1] = make_sphere((Point3) { 0.0,    0.0, -1.0},   0.5, mat_center);
@@ -113,7 +114,7 @@ sphere* create_three_spheres_world_arr(sphere sphere_list[]) {
     return sphere_list;
 }
 
-camera create_three_spheres_camera() {
+Camera create_three_spheres_camera() {
 
     // Image
     double aspect_ratio = 16.0 / 9.0;
@@ -142,8 +143,8 @@ camera create_three_spheres_camera() {
 }
 
 int main() {
-    bvh_node* world = create_random_spheres(3);
-    camera camera;
+    BvhNode* world = create_random_spheres(3);
+    Camera camera;
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
 
     // Setup SDL objects

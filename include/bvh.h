@@ -1,17 +1,18 @@
 #pragma once
 
-#include "aabb.h"
-#include "sphere.h"
 #include <stdlib.h>
 
-typedef struct bvh_node {
-    struct bvh_node *left;
-    struct bvh_node *right;
-    aabb bbox;
-    sphere *sphere;
-} bvh_node;
+#include "aabb.h"
+#include "sphere.h"
 
-void print_bvh(bvh_node *node, int level) {
+typedef struct BvhNode {
+    struct BvhNode *left;
+    struct BvhNode *right;
+    AABB bbox;
+    Sphere *sphere;
+} BvhNode;
+
+void print_bvh(BvhNode *node, int level) {
     for (int i = 0; i < level; i++) {
         printf("\t");
     }
@@ -24,7 +25,7 @@ void print_bvh(bvh_node *node, int level) {
     }
 }
 
-int count_bvh(bvh_node *node) {
+int count_bvh(BvhNode *node) {
     if (node == NULL) {
         return 0;
     }
@@ -34,7 +35,7 @@ int count_bvh(bvh_node *node) {
     return 1 + l + r;
 }
 
-void analyze_depth(bvh_node *node, int currentDepth, int *maxDepth, int *totalLeaves, int *depthSum) {
+void analyze_depth(BvhNode *node, int currentDepth, int *maxDepth, int *totalLeaves, int *depthSum) {
     if (node == NULL) return;
 
     if (node->left == NULL && node->right == NULL) {
@@ -50,7 +51,7 @@ void analyze_depth(bvh_node *node, int currentDepth, int *maxDepth, int *totalLe
 }
 
 // Function to calculate the overlap volume between two AABBs
-double overlap_volume(aabb a, aabb b) {
+double overlap_volume(AABB a, AABB b) {
     double dx = fmin(a.x.max, b.x.max) - fmax(a.x.min, b.x.min);
     double dy = fmin(a.y.max, b.y.max) - fmax(a.y.min, b.y.min);
     double dz = fmin(a.z.max, b.z.max) - fmax(a.z.min, b.z.min);
@@ -62,7 +63,7 @@ double overlap_volume(aabb a, aabb b) {
 }
 
 // Recursive function to calculate the total overlap volume in the BVH
-double calculate_total_overlap(bvh_node *node) {
+double calculate_total_overlap(BvhNode *node) {
     if (node == NULL || node->left == NULL || node->right == NULL) {
         return 0; // Base case: no overlap if node or its children are NULL
     }
@@ -72,9 +73,9 @@ double calculate_total_overlap(bvh_node *node) {
 }
 
 // TODO: Implement a memory pool to keep number scene objects fixed
-bvh_node* allocate_bvh();
+BvhNode* allocate_bvh();
 
-void free_bvh(bvh_node *node) {
+void free_bvh(BvhNode *node) {
     if (node == NULL) {
         return; // Base case: node is null
     }
@@ -91,8 +92,8 @@ static int current_axis = 0;
 
 // Comparator function for sorting spheres
 int compare_sphere(const void *a, const void *b) {
-    sphere *sphereA = (sphere *)a;
-    sphere *sphereB = (sphere *)b;
+    Sphere *sphereA = (Sphere *)a;
+    Sphere *sphereB = (Sphere *)b;
     double valA, valB;
 
     switch (current_axis) {
@@ -120,10 +121,10 @@ int compare_sphere(const void *a, const void *b) {
     else return 0;
 }
 
-bvh_node* build_bvh_recursive(sphere spheres[], int start, int end, int depth) {
+BvhNode* build_bvh_recursive(Sphere spheres[], int start, int end, int depth) {
     if (start == end) {
         // Create a leaf node
-        bvh_node* leaf = (bvh_node*)malloc(sizeof(bvh_node));
+        BvhNode* leaf = (BvhNode*)malloc(sizeof(BvhNode));
         leaf->sphere = &spheres[start];
         leaf->bbox = create_aabb_for_sphere(leaf->sphere); 
         leaf->left = leaf->right = NULL;
@@ -135,7 +136,7 @@ bvh_node* build_bvh_recursive(sphere spheres[], int start, int end, int depth) {
 
     // Split spheres and create internal node
     int mid = (end + start) / 2;
-    bvh_node* node = (bvh_node*)malloc(sizeof(bvh_node));
+    BvhNode* node = (BvhNode*)malloc(sizeof(BvhNode));
     node->left = build_bvh_recursive(spheres, start, mid, depth + 1);
     node->right = build_bvh_recursive(spheres, mid + 1, end, depth + 1);
     node->bbox = create_aabb_for_aabb(&node->left->bbox, &node->right->bbox); 
@@ -143,11 +144,11 @@ bvh_node* build_bvh_recursive(sphere spheres[], int start, int end, int depth) {
     return node;
 }
 
-bvh_node* build_bvh(sphere spheres[], int start, int end) {
+BvhNode* build_bvh(Sphere spheres[], int start, int end) {
     return build_bvh_recursive(spheres, start, end, 0);
 }
 
-bool ray_intersect_bvh(bvh_node *node, ray *ray, interval ray_t, hit_record *record) {
+bool ray_intersect_bvh(BvhNode *node, Ray *ray, Interval ray_t, HitRecord *record) {
     if (node == NULL) {
         return false;
     }
@@ -167,7 +168,7 @@ bool ray_intersect_bvh(bvh_node *node, ray *ray, interval ray_t, hit_record *rec
 
     // If not a leaf node, recursively check children
     bool hit_left = node->left ? ray_intersect_bvh(node->left, ray, ray_t, record) : false;
-    interval new_int = {.min = ray_t.min, .max = hit_left ? record->t : ray_t.max};
+    Interval new_int = {.min = ray_t.min, .max = hit_left ? record->t : ray_t.max};
     bool hit_right = node->right ? ray_intersect_bvh(node->right, ray, new_int, record) : false;
 
     return hit_left || hit_right;

@@ -3,24 +3,23 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "utils.h"
+#include "types.h"
 #include "interval.h"
 #include "aabb.h"
 #include "hittable.h"
-#include "material.h"
 
-typedef struct {
+typedef struct Sphere {
     Point3 center;
     double radius;
-    material mat;
-} sphere;
+    Material mat;
+} Sphere;
 
-void print_sphere(sphere *sphere) {
+void print_Sphere(Sphere *sphere) {
     printf("sphere: (center[%f, %f, %f], r[%f], material[%d])\n", sphere->center.x, sphere->center.y, sphere->center.z, sphere->radius, sphere->mat.type);
 }
 
-sphere make_sphere(Point3 p, double r, material mat) {
-    sphere s = {
+Sphere make_sphere(Point3 p, double r, Material mat) {
+    Sphere s = {
         .center = p,
         .radius = r,
         .mat = mat
@@ -28,17 +27,17 @@ sphere make_sphere(Point3 p, double r, material mat) {
     return s;
 }
 
-aabb create_aabb_for_sphere(sphere* s) {
+AABB create_aabb_for_sphere(Sphere* s) {
     Vec3 radius_vec = {.x = s->radius, .y = s->radius, .z = s->radius};
     Point3 min_pt = diff_vec3(s->center, radius_vec);
     Point3 max_pt = add_vec3(s->center, radius_vec);
     return create_aabb_for_point(min_pt, max_pt);
 }
 
-aabb create_aabb_for_array_sphere(sphere spheres[], int num_spheres) {
-    aabb bbox = create_empty_aabb();
+AABB create_aabb_for_array_sphere(Sphere spheres[], int num_spheres) {
+    AABB bbox = create_empty_aabb();
     for (int i = 0; i < num_spheres; i++) {
-        aabb sphere_box = create_aabb_for_sphere(&spheres[i]);
+        AABB sphere_box = create_aabb_for_sphere(&spheres[i]);
         bbox = create_aabb_for_aabb(&bbox, &sphere_box);
     }
 
@@ -46,7 +45,7 @@ aabb create_aabb_for_array_sphere(sphere spheres[], int num_spheres) {
 }
 
 
-bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
+bool hit(Ray *r, Sphere *sphere, Interval *ray_t, HitRecord *rec) {
     Vec3 oc = diff_vec3(r->origin, sphere->center);
 
     double a = length_squared(r->direction);
@@ -77,13 +76,13 @@ bool hit(ray *r, sphere *sphere, interval *ray_t, hit_record *rec) {
     return true;
 }
 
-bool hit_list(ray *r, int num_spheres, sphere spheres[], interval *ray_t, hit_record *record) {
-    hit_record temp_rec = {0};
+bool hit_list(Ray *r, int num_spheres, Sphere spheres[], Interval *ray_t, HitRecord *record) {
+    HitRecord temp_rec = {0};
     bool hit_anything = false;
     double closest_so_far = ray_t->max;
 
     for (int i = 0; i < num_spheres; i++) {
-        interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
+        Interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
         if (hit(r, &spheres[i], &cur_interval, &temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;

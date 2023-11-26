@@ -1,10 +1,9 @@
 #pragma once
 
+#include "utils.h"
 #include<stdio.h>
 #include<stdbool.h>
 #include<math.h>
-
-#include "utils.h"
 
 typedef struct Vec3 {
     double x;

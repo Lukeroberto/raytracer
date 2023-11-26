@@ -1,12 +1,10 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 
 #include "bvh.h"
 #include "color.h"
 #include "utils.h"
 
 #include "material.h"
-#include "hittable.h"
 #include "sphere.h"
 
 #include <SDL2/SDL.h>
@@ -34,10 +32,10 @@ typedef struct {
     Point3 center, pixel00_loc;
     Vec3 pixel_delta_u, pixel_delta_v;
     Vec3 defocus_disk_u, defocus_disk_v;
-} camera;
+} Camera;
 
-camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel, int max_depth, double vfov, Point3 lookfrom, Point3 lookat, Vec3 vup, double defocus_angle, double focus_dist) {
-    camera camera;
+Camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel, int max_depth, double vfov, Point3 lookfrom, Point3 lookat, Vec3 vup, double defocus_angle, double focus_dist) {
+    Camera camera;
 
     // Config
     camera.image_width = image_width;
@@ -102,65 +100,65 @@ camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     return camera;
 }
 
-color ray_color(ray *r, int depth, int num_spheres, sphere world[]) {
-    hit_record rec = {0};
+Color ray_color(Ray *r, int depth, int num_spheres, Sphere world[]) {
+    HitRecord rec = {0};
     if (depth <= 0) {
-        color no_light_gathered = {0, 0, 0};
+        Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
-    interval world_int = {.min=0.001, .max=INFINITY};
+    Interval world_int = {.min=0.001, .max=INFINITY};
     if (hit_list(r, num_spheres, world, &world_int, &rec)) {
-        ray scattered;
-        color attenuation;
+        Ray scattered;
+        Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            color color = ray_color(&scattered, depth-1, num_spheres, world);
+            Color color = ray_color(&scattered, depth-1, num_spheres, world);
             return mult_vec3(color, attenuation);
         }
-        color no_light_gathered = {0, 0, 0};
+        Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
 
     Vec3 unit = unit_vec(r->direction);
     double interp = 0.5 * (unit.y + 1.0);
-    color start = {1.0, 1.0, 1.0};
+    Color start = {1.0, 1.0, 1.0};
     start = scale_vec3(start, 1.0 - interp);
-    color end = {0.5, 0.7, 1.0};
+    Color end = {0.5, 0.7, 1.0};
     end = scale_vec3(end, interp);
-    color ret = add_vec3(start, end);
+    Color ret = add_vec3(start, end);
     return ret;
 }
 
-color ray_color_bvh(ray *r, int depth, bvh_node *bvh) {
-    hit_record rec = {0};
+Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh) {
+    HitRecord rec = {0};
     if (depth <= 0) {
-        color no_light_gathered = {0, 0, 0};
+        Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
 
-    interval world_int = {.min=0.001, .max=INFINITY};
+    Interval world_int = {.min=0.001, .max=INFINITY};
     if (ray_intersect_bvh(bvh, r, world_int, &rec)) {
-        ray scattered;
-        color attenuation;
+        Ray scattered;
+        Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            color color = ray_color_bvh(&scattered, depth-1, bvh);
+            Color color = ray_color_bvh(&scattered, depth-1, bvh);
             //printf("ray checks in bvh: %d", rec.num_tests);
             return mult_vec3(color, attenuation);
         }
-        color no_light_gathered = {0, 0, 0};
+        Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
 
     Vec3 unit = unit_vec(r->direction);
     double interp = 0.5 * (unit.y + 1.0);
-    color start = {1.0, 1.0, 1.0};
+    Color start = {1.0, 1.0, 1.0};
     start = scale_vec3(start, 1.0 - interp);
-    color end = {0.5, 0.7, 1.0};
+    Color end = {0.5, 0.7, 1.0};
     end = scale_vec3(end, interp);
-    color ret = add_vec3(start, end);
+    Color ret = add_vec3(start, end);
     return ret;
 }
 
-Vec3 pixel_sample_square(camera *camera) {
+Vec3 pixel_sample_square(Camera *camera) {
     double px = -0.5 + random_double();
     double py = -0.5 + random_double();
 
@@ -169,7 +167,7 @@ Vec3 pixel_sample_square(camera *camera) {
     return add_vec3(pixel_px, pixel_py);
 }
 
-Point3 defocus_disk_sample(camera *camera) {
+Point3 defocus_disk_sample(Camera *camera) {
     Point3 p = random_in_unit_disk();
 
     Vec3 defocus_p_u = scale_vec3(camera->defocus_disk_u, p.x);
@@ -177,7 +175,7 @@ Point3 defocus_disk_sample(camera *camera) {
     return add3_vec3(camera->center, defocus_p_u, defocus_p_v);
 }
 
-ray get_ray(int i, int j, camera *camera) {
+Ray get_ray(int i, int j, Camera *camera) {
     Vec3 pixel_delta_i = scale_vec3(camera->pixel_delta_u, i);
     Vec3 pixel_delta_j = scale_vec3(camera->pixel_delta_v, j);
 
@@ -190,18 +188,18 @@ ray get_ray(int i, int j, camera *camera) {
     Point3 ray_origin = camera->center;
     Vec3 ray_dir = diff_vec3(pixel_sample_shifted, ray_origin);
 
-    ray ret = {.origin = ray_origin, .direction = ray_dir};
+    Ray ret = {.origin = ray_origin, .direction = ray_dir};
     return ret;
 }
 
-int render(camera *camera, int num_spheres, sphere world[], SDL_Renderer *renderer) {
+int render(Camera *camera, int num_spheres, Sphere world[], SDL_Renderer *renderer) {
     // Render
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
-            color pixel_color = {0, 0, 0};
+            Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
-                ray r = get_ray(i, j, camera);
-                color ray_c = ray_color(&r, camera->max_depth, num_spheres, world);
+                Ray r = get_ray(i, j, camera);
+                Color ray_c = ray_color(&r, camera->max_depth, num_spheres, world);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
             set_window_pixel(pixel_color, camera->samples_per_pixel, i, j, renderer);
@@ -211,14 +209,14 @@ int render(camera *camera, int num_spheres, sphere world[], SDL_Renderer *render
     return EXIT_SUCCESS;
 }
 
-int render_bvh(camera *camera, bvh_node *bvh, SDL_Surface *surface) {
+int render_bvh(Camera *camera, BvhNode *bvh, SDL_Surface *surface) {
     // Render
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
-            color pixel_color = {0, 0, 0};
+            Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
-                ray r = get_ray(i, j, camera);
-                color ray_c = ray_color_bvh(&r, camera->max_depth, bvh);
+                Ray r = get_ray(i, j, camera);
+                Color ray_c = ray_color_bvh(&r, camera->max_depth, bvh);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
             set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
@@ -228,4 +226,3 @@ int render_bvh(camera *camera, bvh_node *bvh, SDL_Surface *surface) {
     return EXIT_SUCCESS;
 }
 
-#endif

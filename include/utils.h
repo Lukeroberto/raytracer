@@ -1,7 +1,5 @@
 #pragma once
 
-#include<stdlib.h>
-
 const double pi = 3.1415926535897932385;
 
 double degrees_to_radians(double degrees) {
@@ -29,31 +27,4 @@ double random_double() {
 double random_double_interval(double min, double max) {
     return min + (max - min) * random_double();
 }
-
-#include "ray.h"
-#include "vec3.h"
-#include "color.h"
-
-// Define some types
-typedef enum {
-    LAMBERTIAN,
-    METAL,
-    DIELECTRIC
-} material_type;
-
-typedef struct {
-    material_type type;
-    color albedo;
-    double fuzz;
-    double ir;
-} material;
-
-typedef struct {
-    Point3 p;
-    Vec3 normal;
-    double t;
-    bool front_face;
-    material mat;
-    int num_tests;
-} hit_record;
 

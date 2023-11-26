@@ -1,33 +1,35 @@
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#pragma once
 
 #include <stdbool.h>
 
 #include "utils.h"
+#include "types.h"
+#include "ray.h"
+#include "color.h"
 
-bool scatter_lambertian(material *material, hit_record *rec, color *attenuation, ray *scattered) {
+bool scatter_lambertian(Material *material, HitRecord *rec, Color *attenuation, Ray *scattered) {
     Vec3 random_unit_vec = random_unit_vector();
     Vec3 scatter_direction = add_vec3(rec->normal, random_unit_vec);
     if (near_zero(scatter_direction)) {
         scatter_direction = rec->normal;
     }
 
-    ray scattered_ray = {rec->p, scatter_direction};
-    *scattered = scattered_ray;
+    Ray scattered_Ray = {rec->p, scatter_direction};
+    *scattered = scattered_Ray;
     *attenuation = material->albedo;
 
     return true;
 }
 
-bool scatter_metal(material *material, ray *ray_in, hit_record *rec, color *attenuation, ray *scattered) {
-    Vec3 unit = unit_vec(ray_in->direction);
+bool scatter_metal(Material *material, Ray *Ray_in, HitRecord *rec, Color *attenuation, Ray *scattered) {
+    Vec3 unit = unit_vec(Ray_in->direction);
     Vec3 reflected = reflect(unit, rec->normal);
     Vec3 random_unit = random_unit_vector();
     Vec3 fuzzed_unit = scale_vec3(random_unit, material->fuzz);
     Vec3 fuzzed_reflected = add_vec3(reflected, fuzzed_unit);
-    ray scattered_ray = {rec->p, fuzzed_reflected};
+    Ray scattered_Ray = {rec->p, fuzzed_reflected};
 
-    *scattered = scattered_ray;
+    *scattered = scattered_Ray;
     *attenuation = material->albedo;
 
     return true;
@@ -41,11 +43,11 @@ double reflectance(double cosine, double ref_indx) {
     return r0 + (1-r0)*pow((1-cosine), 5);
 }
 
-bool scatter_dielectric(material *material, ray *ray_in, hit_record *rec, color *attenuation, ray *scattered) {
-    *attenuation = (color) {1.0, 1.0, 1.0};
+bool scatter_dielectric(Material *material, Ray *Ray_in, HitRecord *rec, Color *attenuation, Ray *scattered) {
+    *attenuation = (Color) {1.0, 1.0, 1.0};
     double refraction_ratio = rec->front_face ? (1.0/material->ir): material->ir; 
 
-    Vec3 unit_direction = unit_vec(ray_in->direction);
+    Vec3 unit_direction = unit_vec(Ray_in->direction);
     Vec3 iunit_direction = invert_vec3(unit_direction);
     double cos_theta = fmin(dot(iunit_direction, rec->normal), 1.0); 
     double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
@@ -58,26 +60,23 @@ bool scatter_dielectric(material *material, ray *ray_in, hit_record *rec, color 
         direction = refract(unit_direction, rec->normal, refraction_ratio);
     }
 
-    *scattered = (ray) {rec->p, direction};
+    *scattered = (Ray) {rec->p, direction};
     return true;
 }
 
-bool scatter(material *material, ray *ray_in, hit_record *rec, color *attenuation, ray *scattered) {
+bool scatter(Material *material, Ray *Ray_in, HitRecord *rec, Color *attenuation, Ray *scattered) {
     switch (material->type) {
         bool ret;
         case LAMBERTIAN:
             ret = scatter_lambertian(material, rec, attenuation, scattered);
             return ret;
         case METAL:
-            ret = scatter_metal(material, ray_in, rec, attenuation, scattered);
+            ret = scatter_metal(material, Ray_in, rec, attenuation, scattered);
             return ret;
         case DIELECTRIC:
-            ret = scatter_dielectric(material, ray_in, rec, attenuation, scattered);
+            ret = scatter_dielectric(material, Ray_in, rec, attenuation, scattered);
             return ret;
     }
 
     return false;
 }
-
-
-#endif

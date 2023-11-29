@@ -163,7 +163,7 @@ bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitR
     if (node->left == NULL && node->right == NULL && node->sphere != NULL) {
         // Test intersection with the sphere at this leaf node
         record->num_tests++;
-        return hit(ray, node->sphere, &ray_t, record);
+        return ray_intersect_sphere(ray, node->sphere, &ray_t, record);
     }
 
     // If not a leaf node, recursively check children

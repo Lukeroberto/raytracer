@@ -10,6 +10,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
@@ -141,8 +142,13 @@ Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle me
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
             Color color = ray_color_triangle(&scattered, depth-1, num_triangles, mesh);
+            //printf("current normal: [%f, %f, %f]\n", rec.normal.x, rec.normal.y, rec.normal.z);
+            //printf("intersection tests: %d, current color: [%f, %f, %f]\n", rec.num_tests, color.x, color.y, color.z);
             return mult_vec3(color, attenuation);
         }
+
+        // Should never happen, scattering always returns true
+        printf("Something bad happened, no scattering for mat %d\n", rec.mat.type);
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }

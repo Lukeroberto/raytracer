@@ -11,18 +11,30 @@ int main() {
     if (ret == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
+    printf("Number of triangles: %d\n", data.attrib.num_faces / 3);
+    printf("Number of vertices: %d\n", data.attrib.num_vertices);
+    printf("num_face_num_verts: %d\n", data.attrib.num_face_num_verts);
+    printf("Number of normals: %d\n\n", data.attrib.num_normals);
 
-    printf("Number of triangles: %d\n", data.attrib.num_face_num_verts);
-    printf("Number of normals: %d\n", data.attrib.num_normals);
-
-    #define NUM_TRIANGLES 36
+    #define NUM_TRIANGLES 12
 
     Triangle triangles[NUM_TRIANGLES] = {0};
     TriangleMesh mesh = {.triangles=triangles, .size=NUM_TRIANGLES};
-    Material mat = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
+    Material mat = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.1};
 
     convert_obj_data_to_mesh(&data, &mesh, &mat);
-
+    int num_t = 12;
+    //
+    //	(v0[1.000000, -1.000000, 1.000000], v1[-1.000000, -1.000000, 1.000000], v2[-1.000000, -1.000000, -1.000000]), 
+	//n[0.000000, 1.000000, 0.000000],
+    //Triangle tri = {
+    //    .v1 = {10., -10., 10.},
+    //    .v2 = {-10., -10., 10.},
+    //    .v3 = {-10., -10., -10.},
+    //    .mat = mat,
+    //    .normal = {0., 1., 0.}
+    //};
+    //triangles[0] = tri;
 
     // Image
     #define IMAGE_WIDTH 720
@@ -54,18 +66,30 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
     SDL_Surface * surface = SDL_GetWindowSurface(window);
+    for (int i = 1; i < 100; i++) {
+        Camera camera = create_camera(
+                image_width, 
+                aspect_ratio, 
+                samples_per_pixel,
+                max_depth,
+                vfov,
+                (Vec3) {6, 2, 3 + 0.5 * (double) i},
+                lookat,
+                vup,
+                defocus_angle,
+                focus_dist
+        );
+        clock_t tik = clock();
+        render_triangles(&camera, num_t, triangles, surface);
+        SDL_UpdateWindowSurface(window);
+        clock_t tok = clock();
+        printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
+    }
 
     // Run until user quits
-    int quit = 0;
     SDL_Event event;
-    while (!quit) {
-        while (SDL_PollEvent(&event)) {
-            clock_t tik = clock();
-            render_triangles(&camera, NUM_TRIANGLES, triangles, surface);
-            SDL_UpdateWindowSurface(window);
-            clock_t tok = clock();
-            printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
-        }
+    while(event.type != SDL_QUIT) {
+        SDL_PollEvent(&event);
     }
 
     // Cleanup 

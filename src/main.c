@@ -45,22 +45,22 @@ int main() {
                 case SDL_KEYDOWN:
                     switch( event.key.keysym.sym ){
                         case SDLK_LEFT:
-                            update_camera((Vec3) {-0.1, 0.0, 0.0}, &camera);
+                            update_camera((Vec3) {-0.3, 0.0, 0.0}, &camera);
                             render_bvh(&camera, world, surface);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_RIGHT:
-                            update_camera((Vec3) {0.1, 0.0, 0.0}, &camera);
+                            update_camera((Vec3) {0.3, 0.0, 0.0}, &camera);
                             render_bvh(&camera, world, surface);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_UP:
-                            update_camera((Vec3) {0.0, 0.0, 0.1}, &camera);
+                            update_camera((Vec3) {0.0, 0.3, 0.0}, &camera);
                             render_bvh(&camera, world, surface);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_DOWN:
-                            update_camera((Vec3) {0.0, 0.0, -0.1}, &camera);
+                            update_camera((Vec3) {0.0, -0.3, 0.0}, &camera);
                             render_bvh(&camera, world, surface);
                             SDL_UpdateWindowSurface(window);
                             break;
@@ -143,15 +143,14 @@ BvhNode* create_random_spheres(int max_spheres) {
     return build_bvh(sphere_list, 0, max_spheres);
 }
 
-void update_camera(Vec3 lookfrom_delta, Camera *camera) {
+void update_camera(Vec3 lookat_delta, Camera *camera) {
     // Image
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 3;
     int max_depth = 5;
     double vfov = 20;
-    Point3 lookfrom = add_vec3((Vec3) {13, 2, 3}, lookfrom_delta);
-    Point3 lookat = {0, 0, 0};
+    Point3 lookfrom = {13, 2, 3};
     Vec3 vup = {0, 1, 0};
     double defocus_angle = 0.6;
     double focus_dist = 10.0;
@@ -163,7 +162,7 @@ void update_camera(Vec3 lookfrom_delta, Camera *camera) {
             max_depth,
             vfov,
             lookfrom,
-            lookat,
+            add_vec3(camera->lookat,lookat_delta),
             vup,
             defocus_angle,
             focus_dist

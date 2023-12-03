@@ -24,6 +24,21 @@ int main() {
 
     convert_obj_data_to_mesh(&data, &mesh, &mat);
 
+    Point3 center = {0};
+
+    for (int i = 0 ; i < NUM_TRIANGLES; i++) {
+        Triangle t = triangles[i];
+        center.x += t.v1.x + t.v2.x + t.v3.x;
+        center.y += t.v1.y + t.v2.y + t.v3.y;
+        center.z += t.v1.z + t.v2.z + t.v3.z;
+    }
+
+    center.x = center.x / (double) NUM_TRIANGLES;
+    center.y = center.y / (double) NUM_TRIANGLES;
+    center.y /= 2.;
+    center.z = center.z / (double) NUM_TRIANGLES;
+    printf("Center of mass: [%f, %f, %f]\n", center.x, center.y, center.z);
+
     // Image
     #define IMAGE_WIDTH 720
 
@@ -32,8 +47,8 @@ int main() {
     int samples_per_pixel = 3;
     int max_depth = 5;
     double vfov = 20;
-    Point3 lookfrom = {13, 2, 3};
-    Point3 lookat = {0, 0, 0};
+    Point3 lookfrom = {35, 50, 3};
+    Point3 lookat = center;
     Vec3 vup = {0, 1, 0};
     double defocus_angle = 0.6;
     double focus_dist = 10.0;
@@ -55,18 +70,6 @@ int main() {
     SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
     SDL_Surface * surface = SDL_GetWindowSurface(window);
     for (int i = 1; i < 100; i++) {
-        Camera camera = create_camera(
-                image_width, 
-                aspect_ratio, 
-                samples_per_pixel,
-                max_depth,
-                vfov,
-                lookfrom,
-                (Vec3) {0, (double) i, 0},
-                vup,
-                defocus_angle,
-                focus_dist
-        );
         clock_t tik = clock();
         render_triangles(&camera, NUM_TRIANGLES, triangles, surface);
         SDL_UpdateWindowSurface(window);

@@ -92,8 +92,8 @@ void convert_obj_data_to_mesh(TinyObjData* data, TriangleMesh* mesh, Material* m
         }
 
         Triangle tri = {.v1=v0, .v2=v1, .v3=v2, .normal=normal, .mat=*mat};
-        printf("Tri indx: %d, %d, %d\n", f0, f1, f2);
-        printf("Create tri: "); print_tri(tri);
+        //printf("Tri indx: %d, %d, %d\n", f0, f1, f2);
+        //printf("Create tri: "); print_tri(tri);
         mesh->triangles[face_id] = tri;
     }
 }

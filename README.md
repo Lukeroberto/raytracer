@@ -1,28 +1,28 @@
-Raytracer written in c. 
+# Raytracer written in c. 
+
+## Planned upgrades/features:
+
+* [x] implement BVH for spheres
+* [x] support loading in triangle meshes
+* [ ] speed up triangle meshes with BVH support
+* [ ] debug/visualize BVH by implementing ray-quad intersection
+* [ ] support fully keyboard, ie aswd for movement, up/down/left/right or mouse for camera angle
+* [ ] optionally run on more than 1 core
+* [ ] refactor to avoid recursion
+* [ ] refactor to header + implementation instead of headerless everywhere
+* [ ] implement material that links rays between 2 materials (ie portal-esque render)
+
+
+## High quality single-frame renders
 
 Taken from https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
+High Quality Renders: ![final](examples/final_render.png)
 
 
-## Early work from the course:
+## Realtime renders
 
-Diffuse sphere with lambertian scattering: ![diffuse](examples/diffuse.png)
-
-3 spheres: a diffuse one in the center and two metallic ones (reflective-based scattering) on each side: ![diffuse and metallic](examples/metal_and_diffuse.png)
-
-3 spheres: glass (hollow glass sphere), diffuse, and metal: ![glass](examples/glass.png)
-
-3 spheres adjusting the camera to view from a different angle: ![angle](examples/camera_basis_vectors.png)
-
-3 spheres adjusting field of view for a zoom effect: ![fov](examples/camera_zoom.png)
-
-Final Render shown on the course homepage: ![final](examples/final_render.png)
-
-
-## Work on getting things realtime + add more features
-
-Some work take from https://raytracing.github.io/books/RayTracingTheNextWeek.html. Otherwise, just random optimizations to make a small interactive environment.
-
+Some work take from https://raytracing.github.io/books/RayTracingTheNextWeek.html. 
 
 Final render of course homepage, frame-by-frame realtime (settings turned way down): 
 

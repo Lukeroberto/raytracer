@@ -32,4 +32,5 @@ Final render of course homepage, frame-by-frame realtime (settings turned way do
 This is using SDL2 to create the window and render the image to the frame. Everything else is still custom. Next steps are to implement bounding-volume hierarchies to remove the unnecessary ray bounces being calculated all over the scene. Then adding image smoothing and keyboard inputs after that.
 
 Render with the camera center slowly panning overtime.
+
 ![realtime-ish](examples/render_motion.gif)

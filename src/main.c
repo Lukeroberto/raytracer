@@ -81,7 +81,6 @@ int main() {
         }
     }
 
-
     // Cleanup 
     free_bvh(world);
     SDL_FreeSurface(surface);
@@ -148,7 +147,7 @@ void update_camera(Vec3 lookat_delta, Camera *camera) {
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 3;
-    int max_depth = 5;
+    int max_depth = 50;
     double vfov = 20;
     Point3 lookfrom = {13, 2, 3};
     Vec3 vup = {0, 1, 0};

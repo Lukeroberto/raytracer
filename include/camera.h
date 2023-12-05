@@ -102,6 +102,15 @@ Camera create_camera(int image_width, double aspect_ratio, int samples_per_pixel
     return camera;
 }
 
+Color sky(Vec3 unit_dir) {
+    double interp = 0.5 * (unit_dir.y + 1.0);
+    Color start = {1.0, 1.0, 1.0};
+    start = scale_vec3(start, 1.0 - interp);
+    Color end = {0.5, 0.7, 1.0};
+    end = scale_vec3(end, interp);
+    return add_vec3(start, end);
+}
+
 Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[]) {
     HitRecord rec = {0};
     if (depth <= 0) {
@@ -120,14 +129,7 @@ Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[]) {
         return no_light_gathered;
     }
 
-    Vec3 unit = unit_vec(r->direction);
-    double interp = 0.5 * (unit.y + 1.0);
-    Color start = {1.0, 1.0, 1.0};
-    start = scale_vec3(start, 1.0 - interp);
-    Color end = {0.5, 0.7, 1.0};
-    end = scale_vec3(end, interp);
-    Color ret = add_vec3(start, end);
-    return ret;
+    return sky(unit_vec(r->direction));
 }
 
 Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle mesh[]) {
@@ -142,8 +144,6 @@ Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle me
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
             Color color = ray_color_triangle(&scattered, depth-1, num_triangles, mesh);
-            //printf("current normal: [%f, %f, %f]\n", rec.normal.x, rec.normal.y, rec.normal.z);
-            //printf("intersection tests: %d, current color: [%f, %f, %f]\n", rec.num_tests, color.x, color.y, color.z);
             return mult_vec3(color, attenuation);
         }
 
@@ -153,14 +153,7 @@ Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle me
         return no_light_gathered;
     }
 
-    Vec3 unit = unit_vec(r->direction);
-    double interp = 0.5 * (unit.y + 1.0);
-    Color start = {1.0, 1.0, 1.0};
-    start = scale_vec3(start, 1.0 - interp);
-    Color end = {0.5, 0.7, 1.0};
-    end = scale_vec3(end, interp);
-    Color ret = add_vec3(start, end);
-    return ret;
+    return sky(unit_vec(r->direction));
 }
 
 Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh) {
@@ -169,28 +162,22 @@ Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh) {
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
-
     Interval world_int = {.min=0.001, .max=INFINITY};
     if (ray_intersect_bvh(bvh, r, world_int, &rec)) {
         Ray scattered;
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
             Color color = ray_color_bvh(&scattered, depth-1, bvh);
-            //printf("ray checks in bvh: %d", rec.num_tests);
             return mult_vec3(color, attenuation);
         }
+
+        // Should never happen, scattering always returns true
+        printf("Something bad happened, no scattering for mat %d\n", rec.mat.type);
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
 
-    Vec3 unit = unit_vec(r->direction);
-    double interp = 0.5 * (unit.y + 1.0);
-    Color start = {1.0, 1.0, 1.0};
-    start = scale_vec3(start, 1.0 - interp);
-    Color end = {0.5, 0.7, 1.0};
-    end = scale_vec3(end, interp);
-    Color ret = add_vec3(start, end);
-    return ret;
+    return sky(unit_vec(r->direction));
 }
 
 Vec3 pixel_sample_square(Camera *camera) {

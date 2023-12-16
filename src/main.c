@@ -24,7 +24,55 @@ void update_camera(Vec3 delta, Camera *camera);
 
 
 int main() {
-    BvhNode* world = create_random_spheres(3);
+    Sphere sphere_list[500];
+
+    int num_spheres = 0;
+    const Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
+    sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
+    num_spheres++;
+
+    const Material mat1 = {.type=DIELECTRIC, .ir=1.5};
+    sphere_list[num_spheres] = make_sphere((Point3) {0, 1, 0}, 1.0, mat1);
+    num_spheres++;
+
+    const Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
+    sphere_list[num_spheres] = make_sphere((Point3) {-4, 1, 0}, 1.0, mat2);
+    num_spheres++;
+
+    const Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
+    sphere_list[num_spheres] = make_sphere((Point3) {4, 1, 0}, 1.0, mat3);
+    num_spheres++;
+
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            double choose_mat = random_double();
+            Point3 center = {a+ 0.9*random_double(), 0.2, b + 0.9*random_double()};
+
+            Vec3 vec = diff_vec3(center, (Point3) {4, 0.2, 0});
+            if (length(vec) > 0.9) {
+                if (choose_mat < 0.8) {
+                    // Diffuse
+                    Color albedo = random_vec();
+                    Material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
+                    num_spheres++;
+                } else if (choose_mat < 0.90) {
+                    // Metal
+                    Color albedo = random_vec_interval(0.5, 1);
+                    double fuzz = random_double_interval(0, 0.5);
+                    Material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, metal_mat);
+                    num_spheres++;
+                } else {
+                    // Glass
+                    Material glass_mat = {.type=DIELECTRIC, .ir=1.5};
+                    sphere_list[num_spheres] = make_sphere(center, 0.2, glass_mat);
+                    num_spheres++;
+                }
+            }
+        }
+    }
+    BvhNode *world = build_bvh(sphere_list, 150);
     Camera camera;
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
 
@@ -35,6 +83,7 @@ int main() {
 
     double overlap = calculate_total_overlap(world);
     printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
+    print_bvh(world, 0);
 
     // Run until user quits
     int quit = 0;
@@ -49,22 +98,26 @@ int main() {
                     switch( event.key.keysym.sym ){
                         case SDLK_LEFT:
                             update_camera((Vec3) {-0.3, 0.0, 0.0}, &camera);
-                            render_bvh(&camera, world, surface, &num_intersects);
+                            //render_bvh(&camera, world, surface, &num_intersects);
+                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_RIGHT:
                             update_camera((Vec3) {0.3, 0.0, 0.0}, &camera);
-                            render_bvh(&camera, world, surface, &num_intersects);
+                            //render_bvh(&camera, world, surface, &num_intersects);
+                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_UP:
                             update_camera((Vec3) {0.0, 0.3, 0.0}, &camera);
-                            render_bvh(&camera, world, surface, &num_intersects);
+                            //render_bvh(&camera, world, surface, &num_intersects);
+                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
                             SDL_UpdateWindowSurface(window);
                             break;
                         case SDLK_DOWN:
                             update_camera((Vec3) {0.0, -0.3, 0.0}, &camera);
-                            render_bvh(&camera, world, surface, &num_intersects);
+                            //render_bvh(&camera, world, surface, &num_intersects);
+                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
                             SDL_UpdateWindowSurface(window);
                             break;
                         default:
@@ -88,7 +141,7 @@ int main() {
     }
 
     // Cleanup 
-    //free_bvh(world);
+    free_bvh(world);
     SDL_FreeSurface(surface);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -149,19 +202,19 @@ BvhNode* create_random_spheres(int max_spheres) {
     Sphere sphere_list[500];
 
     int num_spheres = 0;
-    Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
+    const Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
     sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
     num_spheres++;
 
-    Material mat1 = {.type=DIELECTRIC, .ir=1.5};
+    const Material mat1 = {.type=DIELECTRIC, .ir=1.5};
     sphere_list[num_spheres] = make_sphere((Point3) {0, 1, 0}, 1.0, mat1);
     num_spheres++;
 
-    Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
+    const Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
     sphere_list[num_spheres] = make_sphere((Point3) {-4, 1, 0}, 1.0, mat2);
     num_spheres++;
 
-    Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
+    const Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
     sphere_list[num_spheres] = make_sphere((Point3) {4, 1, 0}, 1.0, mat3);
     num_spheres++;
 
@@ -194,7 +247,7 @@ BvhNode* create_random_spheres(int max_spheres) {
             }
         }
     }
-    return build_bvh(sphere_list, 0, max_spheres);
+    return build_bvh(sphere_list, max_spheres);
 }
 
 void update_camera(Vec3 lookat_delta, Camera *camera) {
@@ -202,7 +255,7 @@ void update_camera(Vec3 lookat_delta, Camera *camera) {
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 3;
-    int max_depth = 15;
+    int max_depth = 3;
     double vfov = 20;
     Point3 lookfrom = {13, 2, 3};
     Vec3 vup = {0, 1, 0};

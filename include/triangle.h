@@ -20,7 +20,19 @@ typedef struct TriangleMesh {
     size_t size;
 } TriangleMesh;
 
-AABB create_aabb_for_triangle(const Triangle* s);
+AABB create_aabb_for_triangle(const Triangle* s) {
+    AABB b1 = create_aabb_for_point(s->v1, s->v2);
+    AABB b2 = create_aabb_for_point(s->v1, s->v2);
+    return create_aabb_for_aabb(&b1, &b2);
+}
+
+Point3 center(const Triangle t) {
+    return (Point3) {
+        .x = (t.v1.x + t.v2.x + t.v3.x) / 3,
+        .y = (t.v1.y + t.v2.y + t.v3.y) / 3,
+        .z = (t.v1.z + t.v2.z + t.v3.z) / 3,
+    };
+}
 
 bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interval *ray_t, HitRecord *rec, int *num_intersects) {
     (*num_intersects)++;

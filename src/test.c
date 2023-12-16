@@ -2,13 +2,15 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "bvh.h"
 #include "scene.h"
 #include "camera.h"
+#include "triangle.h"
 
 int main() {
     TinyObjData data = {0};
-    int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
-    //int ret = get_obj_data_from_file("assets/cube.obj", &data);
+    //int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
+    int ret = get_obj_data_from_file("assets/cube.obj", &data);
     if (ret == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
@@ -23,7 +25,6 @@ int main() {
     Triangle triangles[NUM_TRIANGLES] = {0};
     TriangleMesh mesh = {.triangles=triangles, .size=NUM_TRIANGLES};
     Material mat = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.1};
-
     convert_obj_data_to_mesh(&data, &mesh, &mat);
 
     Point3 center = {0};
@@ -71,10 +72,17 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
     SDL_Surface * surface = SDL_GetWindowSurface(window);
+
+    BvhNode* bvh = build_bvh_tri(triangles, n_tris);
+    double overlap = calculate_total_overlap(bvh);
+    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(bvh), overlap);
+    print_bvh(bvh, 0);
+
     for (int i = 1; i < 5; i++) {
         clock_t tik = clock();
         int num_intersects = 0;
-        render_triangles(&camera, n_tris, triangles, surface, &num_intersects);
+        render_bvh(&camera, bvh, surface, &num_intersects);
+        //render_triangles(&camera, n_tris, triangles, surface, &num_intersects);
         SDL_UpdateWindowSurface(window);
         clock_t tok = clock();
 
@@ -93,6 +101,8 @@ int main() {
     tinyobj_attrib_free(&data.attrib);
     tinyobj_shapes_free(data.shapes, data.num_shapes);
     tinyobj_materials_free(data.materials, data.num_materials);
+
+    free_bvh(bvh);
 
     SDL_FreeSurface(surface);
     SDL_DestroyWindow(window);

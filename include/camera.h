@@ -164,7 +164,7 @@ Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh, int *num_intersects) {
         return no_light_gathered;
     }
     Interval world_int = {.min=0.001, .max=INFINITY};
-    if (ray_intersect_bvh(bvh, r, world_int, &rec, num_intersects)) {
+    if (ray_intersect_bvh(bvh, r, world_int, &rec, num_intersects, 0)) {
         Ray scattered;
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
@@ -220,7 +220,6 @@ int render_spheres(Camera *camera, int num_spheres, Sphere world[], SDL_Surface 
         for (int i = 0; i < camera->image_width; ++i) {
             Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
-                int temp = *num_intersects;
                 Ray r = get_ray(i, j, camera);
                 Color ray_c = ray_color(&r, camera->max_depth, num_spheres, world, num_intersects);
                 pixel_color = add_vec3(pixel_color, ray_c);
@@ -252,11 +251,13 @@ int render_bvh(Camera *camera, BvhNode *bvh, SDL_Surface *surface, int *num_inte
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
             Color pixel_color = {0, 0, 0};
+            //int t = *num_intersects;
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
                 Ray r = get_ray(i, j, camera);
                 Color ray_c = ray_color_bvh(&r, camera->max_depth, bvh, num_intersects);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
+            //printf("tests on ray: %d\n", *num_intersects - t);
             set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
         }
     }

@@ -22,12 +22,25 @@ AABB create_empty_aabb() {
 AABB create_aabb_for_point(Point3 a, Point3 b) {
     AABB bbox = {
         .x = (Interval) {.min=fmin(a.x, b.x), .max=fmax(a.x, b.x)},
-        .y = (Interval) {.min=fmax(a.y, b.y), .max=fmax(a.y, b.y)},
-        .z = (Interval) {.min=fmax(a.z, b.z), .max=fmax(a.z, b.z)}
+        .y = (Interval) {.min=fmin(a.y, b.y), .max=fmax(a.y, b.y)},
+        .z = (Interval) {.min=fmin(a.z, b.z), .max=fmax(a.z, b.z)}
     };
 
     return bbox;
 }
+
+const double EPSILON = 0.0001;
+
+AABB create_aabb_for_point3(Point3 a, Point3 b, Point3 c) {
+    AABB bbox = {
+        .x = (Interval) {.min=fmin(fmin(a.x, b.x), c.x) - EPSILON, .max=fmax(fmax(a.x, b.x), c.x) + EPSILON},
+        .y = (Interval) {.min=fmin(fmin(a.y, b.y), c.y) - EPSILON, .max=fmax(fmax(a.y, b.y), c.y) + EPSILON},
+        .z = (Interval) {.min=fmin(fmin(a.z, b.z), c.z) - EPSILON, .max=fmax(fmax(a.z, b.z), c.z)+ EPSILON},
+    };
+
+    return bbox;
+}
+
 
 AABB create_aabb_for_aabb(const AABB *a, const AABB *b) {
    return (AABB) {
@@ -44,53 +57,21 @@ Interval get_axis_from_aabb(const AABB *bbox, int n) {
     return bbox->x;
 }
 
-bool hit_aabb_axis(const Ray *ray, Interval ray_t, const AABB *bbox, int axis_n) {
-    double ray_dir;
-    double orig_axis;
-    switch (axis_n) {
-        case 0:
-            ray_dir = ray->direction.x;
-            orig_axis = ray->origin.x;
-            break;
-
-        case 1: 
-            ray_dir = ray->direction.y;
-            orig_axis = ray->origin.y;
-            break;
-
-        case 2:
-            ray_dir = ray->direction.z;
-            orig_axis = ray->origin.z;
-            break;
-    }
-
-    double invDir = 1 / ray_dir;
-
-    Interval intvl = get_axis_from_aabb(bbox, axis_n);
-    double t0 = (intvl.min - orig_axis) * invDir;
-    double t1 = (intvl.max - orig_axis) * invDir;
-
-    if (invDir < 0) {
-        double temp = t0;
-        t0 = t1;
-        t1 = temp;
-    }
-
-    if (t0 > ray_t.min) ray_t.min = t0;
-    if (t1 < ray_t.max) ray_t.max = t1;
-
-    if (ray_t.max <= ray_t.min)
-        return false;
-    
-    return true;
-}
-
 bool hit_aabb(const Ray *ray, Interval ray_t, const AABB *bbox) {
     for (int a = 0; a < 3; a++) {
-        if (hit_aabb_axis(ray, ray_t, bbox, a)) {
-            return true;
+        double axis_ratio_min = (get_axis_from_aabb(bbox, a).min - origin_dim(ray, a)) / dir_dim(ray, a);
+        double axis_ratio_max = (get_axis_from_aabb(bbox, a).max - origin_dim(ray, a)) / dir_dim(ray, a);
+
+        double t0 = fmin(axis_ratio_min, axis_ratio_max);
+        double t1 = fmax(axis_ratio_min, axis_ratio_max);
+
+        ray_t.min = fmax(t0, ray_t.min);
+        ray_t.max = fmin(t1, ray_t.max);
+
+        if (ray_t.max <= ray_t.min) {
+            return false;
         }
     }
 
-    return false;
+    return true;
 }

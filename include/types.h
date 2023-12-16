@@ -23,5 +23,4 @@ typedef struct HitRecord{
     double t;
     bool front_face;
     Material mat;
-    int num_tests;
 } HitRecord;

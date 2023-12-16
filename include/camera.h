@@ -111,18 +111,18 @@ Color sky(Vec3 unit_dir) {
     return add_vec3(start, end);
 }
 
-Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[]) {
+Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[], int *num_intersects) {
     HitRecord rec = {0};
     if (depth <= 0) {
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
     Interval world_int = {.min=0.001, .max=INFINITY};
-    if (ray_intersect_sphere_arr(r, num_spheres, world, &world_int, &rec)) {
+    if (ray_intersect_sphere_arr(r, num_spheres, world, &world_int, &rec, num_intersects)) {
         Ray scattered;
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            Color color = ray_color(&scattered, depth-1, num_spheres, world);
+            Color color = ray_color(&scattered, depth-1, num_spheres, world, num_intersects);
             return mult_vec3(color, attenuation);
         }
         Color no_light_gathered = {0, 0, 0};
@@ -132,18 +132,18 @@ Color ray_color(const Ray *r, int depth, int num_spheres, Sphere world[]) {
     return sky(unit_vec(r->direction));
 }
 
-Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle mesh[]) {
+Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle mesh[], int *num_intersects) {
     HitRecord rec = {0};
     if (depth <= 0) {
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
     Interval world_int = {.min=0.001, .max=INFINITY};
-    if (ray_intersect_triangle_arr(r, num_triangles, mesh, &world_int, &rec)) {
+    if (ray_intersect_triangle_arr(r, num_triangles, mesh, &world_int, &rec, num_intersects)) {
         Ray scattered;
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            Color color = ray_color_triangle(&scattered, depth-1, num_triangles, mesh);
+            Color color = ray_color_triangle(&scattered, depth-1, num_triangles, mesh, num_intersects);
             return mult_vec3(color, attenuation);
         }
 
@@ -156,18 +156,18 @@ Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle me
     return sky(unit_vec(r->direction));
 }
 
-Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh) {
+Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh, int *num_intersects) {
     HitRecord rec = {0};
     if (depth <= 0) {
         Color no_light_gathered = {0, 0, 0};
         return no_light_gathered;
     }
     Interval world_int = {.min=0.001, .max=INFINITY};
-    if (ray_intersect_bvh(bvh, r, world_int, &rec)) {
+    if (ray_intersect_bvh(bvh, r, world_int, &rec, num_intersects)) {
         Ray scattered;
         Color attenuation;
         if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
-            Color color = ray_color_bvh(&scattered, depth-1, bvh);
+            Color color = ray_color_bvh(&scattered, depth-1, bvh, num_intersects);
             return mult_vec3(color, attenuation);
         }
 
@@ -214,13 +214,14 @@ Ray get_ray(int i, int j, Camera *camera) {
     return ret;
 }
 
-int render_spheres(Camera *camera, int num_spheres, Sphere world[], SDL_Surface *surface) {
+int render_spheres(Camera *camera, int num_spheres, Sphere world[], SDL_Surface *surface, int *num_intersects) {
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
             Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
+                int temp = *num_intersects;
                 Ray r = get_ray(i, j, camera);
-                Color ray_c = ray_color(&r, camera->max_depth, num_spheres, world);
+                Color ray_c = ray_color(&r, camera->max_depth, num_spheres, world, num_intersects);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
             set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
@@ -230,13 +231,13 @@ int render_spheres(Camera *camera, int num_spheres, Sphere world[], SDL_Surface 
     return EXIT_SUCCESS;
 }
 
-int render_triangles(Camera *camera, int num_triangles, Triangle mesh[], SDL_Surface *surface) {
+int render_triangles(Camera *camera, int num_triangles, Triangle mesh[], SDL_Surface *surface, int *num_intersects) {
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
             Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
                 Ray r = get_ray(i, j, camera);
-                Color ray_c = ray_color_triangle(&r, camera->max_depth, num_triangles, mesh);
+                Color ray_c = ray_color_triangle(&r, camera->max_depth, num_triangles, mesh, num_intersects);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
             set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
@@ -246,13 +247,13 @@ int render_triangles(Camera *camera, int num_triangles, Triangle mesh[], SDL_Sur
     return EXIT_SUCCESS;
 }
 
-int render_bvh(Camera *camera, BvhNode *bvh, SDL_Surface *surface) {
+int render_bvh(Camera *camera, BvhNode *bvh, SDL_Surface *surface, int *num_intersects ) {
     for (int j = 0; j < camera->image_height; ++j) {
         for (int i = 0; i < camera->image_width; ++i) {
             Color pixel_color = {0, 0, 0};
             for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
                 Ray r = get_ray(i, j, camera);
-                Color ray_c = ray_color_bvh(&r, camera->max_depth, bvh);
+                Color ray_c = ray_color_bvh(&r, camera->max_depth, bvh, num_intersects);
                 pixel_color = add_vec3(pixel_color, ray_c);
             }
             set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);

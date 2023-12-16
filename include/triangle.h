@@ -22,7 +22,8 @@ typedef struct TriangleMesh {
 
 AABB create_aabb_for_triangle(const Triangle* s);
 
-bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interval *ray_t, HitRecord *rec) {
+bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interval *ray_t, HitRecord *rec, int *num_intersects) {
+    (*num_intersects)++;
     const double EPSILON = 0.0000001;
 
     Vec3 dir = unit_vec(r->direction);
@@ -64,21 +65,19 @@ bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interv
     return false;
 }
 
-bool ray_intersect_triangle_arr(const Ray *r, int num_triangles, const Triangle triangles[], const Interval *ray_t, HitRecord *record) {
+bool ray_intersect_triangle_arr(const Ray *r, int num_triangles, const Triangle triangles[], const Interval *ray_t, HitRecord *record, int *num_intersections) {
     HitRecord temp_rec;
-    temp_rec.num_tests = 0;
     bool hit_anything = false;
     double closest_so_far = ray_t->max;
 
     for (int i = 0; i < num_triangles; i++) {
         Interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
-        if (ray_intersect_triangle(r, &triangles[i], &cur_interval, &temp_rec)) {
+        if (ray_intersect_triangle(r, &triangles[i], &cur_interval, &temp_rec, num_intersections)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             *record = temp_rec;
         }
     }
 
-    record->num_tests += num_triangles;
     return hit_anything;
 }

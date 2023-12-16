@@ -45,7 +45,10 @@ AABB create_aabb_for_array_sphere(const Sphere spheres[], int num_spheres) {
 }
 
 
-bool ray_intersect_sphere(const Ray *r, const Sphere *sphere, const Interval *ray_t, HitRecord *rec) {
+bool ray_intersect_sphere(const Ray *r, const Sphere *sphere, const Interval *ray_t, HitRecord *rec, int *num_intersects) {
+    // New intersection check
+    (*num_intersects)++;
+
     Vec3 oc = diff_vec3(r->origin, sphere->center);
 
     double a = length_squared(r->direction);
@@ -76,20 +79,19 @@ bool ray_intersect_sphere(const Ray *r, const Sphere *sphere, const Interval *ra
     return true;
 }
 
-bool ray_intersect_sphere_arr(const Ray *r, int num_spheres, const Sphere spheres[], const Interval *ray_t, HitRecord *record) {
+bool ray_intersect_sphere_arr(const Ray *r, int num_spheres, const Sphere spheres[], const Interval *ray_t, HitRecord *record, int *num_intersects) {
     HitRecord temp_rec = {0};
     bool hit_anything = false;
     double closest_so_far = ray_t->max;
 
     for (int i = 0; i < num_spheres; i++) {
         Interval cur_interval = {.min=ray_t->min, .max=closest_so_far};
-        if (ray_intersect_sphere(r, &spheres[i], &cur_interval, &temp_rec)) {
+        if (ray_intersect_sphere(r, &spheres[i], &cur_interval, &temp_rec, num_intersects)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             *record = temp_rec;
         }
     }
 
-    record->num_tests += num_spheres;
     return hit_anything;
 }

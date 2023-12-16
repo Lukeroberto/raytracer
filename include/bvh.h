@@ -148,28 +148,28 @@ BvhNode* build_bvh(Sphere spheres[], int start, int end) {
     return build_bvh_recursive(spheres, start, end, 0);
 }
 
-bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitRecord *record) {
+bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitRecord *record, int *num_intersects) {
     if (node == NULL) {
         return false;
     }
 
     // Check for ray intersection with the node's AABB
-    record->num_tests++;
+    (*num_intersects)++;
     if (!hit_aabb(ray, ray_t, &node->bbox)) {
         return false; // Ray does not intersect the bounding box
     }
 
+
     // Check if this is a leaf node
     if (node->left == NULL && node->right == NULL && node->sphere != NULL) {
         // Test intersection with the sphere at this leaf node
-        record->num_tests++;
-        return ray_intersect_sphere(ray, node->sphere, &ray_t, record);
+        return ray_intersect_sphere(ray, node->sphere, &ray_t, record, num_intersects);
     }
 
     // If not a leaf node, recursively check children
-    bool hit_left = node->left ? ray_intersect_bvh(node->left, ray, ray_t, record) : false;
+    bool hit_left = node->left ? ray_intersect_bvh(node->left, ray, ray_t, record, num_intersects) : false;
     Interval new_int = {.min = ray_t.min, .max = hit_left ? record->t : ray_t.max};
-    bool hit_right = node->right ? ray_intersect_bvh(node->right, ray, new_int, record) : false;
+    bool hit_right = node->right ? ray_intersect_bvh(node->right, ray, new_int, record, num_intersects) : false;
 
     return hit_left || hit_right;
 }

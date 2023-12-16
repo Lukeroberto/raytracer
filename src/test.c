@@ -71,10 +71,14 @@ int main() {
     SDL_Surface * surface = SDL_GetWindowSurface(window);
     for (int i = 1; i < 100; i++) {
         clock_t tik = clock();
-        render_triangles(&camera, NUM_TRIANGLES, triangles, surface);
+        int num_intersects = 0;
+        render_triangles(&camera, NUM_TRIANGLES, triangles, surface, &num_intersects);
         SDL_UpdateWindowSurface(window);
         clock_t tok = clock();
-        printf("Drew frame in %f ms, %f fps\n", 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
+
+        int num_rays = camera.image_height * camera.image_width * camera.samples_per_pixel;
+        double int_per_ray = (double) num_intersects / num_rays;
+        printf("Drew frame: [%d rays,  %.2f tests/ray, %.2f ms, %.2ff fps]\n", num_rays, int_per_ray, 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
     }
 
     // Run until user quits

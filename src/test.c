@@ -8,6 +8,7 @@
 int main() {
     TinyObjData data = {0};
     int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
+    //int ret = get_obj_data_from_file("assets/cube.obj", &data);
     if (ret == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
@@ -17,6 +18,7 @@ int main() {
     printf("Number of normals: %d\n\n", data.attrib.num_normals);
 
     #define NUM_TRIANGLES 500
+    int n_tris = data.attrib.num_faces / 3;
 
     Triangle triangles[NUM_TRIANGLES] = {0};
     TriangleMesh mesh = {.triangles=triangles, .size=NUM_TRIANGLES};
@@ -26,17 +28,17 @@ int main() {
 
     Point3 center = {0};
 
-    for (int i = 0 ; i < NUM_TRIANGLES; i++) {
+    for (int i = 0 ; i < n_tris; i++) {
         Triangle t = triangles[i];
         center.x += t.v1.x + t.v2.x + t.v3.x;
         center.y += t.v1.y + t.v2.y + t.v3.y;
         center.z += t.v1.z + t.v2.z + t.v3.z;
     }
 
-    center.x = center.x / (double) NUM_TRIANGLES;
-    center.y = center.y / (double) NUM_TRIANGLES;
+    center.x = center.x / (double) n_tris;
+    center.y = center.y / (double) n_tris;
     center.y /= 2.;
-    center.z = center.z / (double) NUM_TRIANGLES;
+    center.z = center.z / (double) n_tris;
     printf("Center of mass: [%f, %f, %f]\n", center.x, center.y, center.z);
 
     // Image
@@ -45,7 +47,7 @@ int main() {
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 3;
-    int max_depth = 5;
+    int max_depth = 3;
     double vfov = 20;
     Point3 lookfrom = {35, 50, 3};
     Point3 lookat = center;
@@ -69,10 +71,10 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
     SDL_Surface * surface = SDL_GetWindowSurface(window);
-    for (int i = 1; i < 100; i++) {
+    for (int i = 1; i < 5; i++) {
         clock_t tik = clock();
         int num_intersects = 0;
-        render_triangles(&camera, NUM_TRIANGLES, triangles, surface, &num_intersects);
+        render_triangles(&camera, n_tris, triangles, surface, &num_intersects);
         SDL_UpdateWindowSurface(window);
         clock_t tok = clock();
 

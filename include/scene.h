@@ -77,20 +77,14 @@ void convert_obj_data_to_mesh(TinyObjData* data, TriangleMesh* mesh, Material* m
         Point3 v2 = {(double) v20, (double) v21, (double) v22};
 
         // Assume all normals are the same?
-        Point3 normal;
-        if (data->attrib.num_normals > 0) {
-            float n00 = data->attrib.normals[3 * f0 + 0];
-            float n01 = data->attrib.normals[3 * f0 + 1];
-            float n02 = data->attrib.normals[3 * f0 + 2];
-            //int n1 = idx1.vn_idx;
-            //int n2 = idx2.vn_idx;
+        Point3 normal = {0};
+        int n0 = idx0.vn_idx;
+        if (data->attrib.num_normals > 0 && n0 >= 0) {
+            float n00 = data->attrib.normals[3 * n0 + 0];
+            float n01 = data->attrib.normals[3 * n0 + 1];
+            float n02 = data->attrib.normals[3 * n0 + 2];
             normal = (Point3) {(double) n00, (double) n01, (double) n02};
-        } else {
-            Vec3 e1 = diff_vec3(v1, v0);
-            Vec3 e2 = diff_vec3(v2, v0);
-            normal = cross(e1, e2);
-        }
-
+        } 
         Triangle tri = {.v1=v0, .v2=v1, .v3=v2, .normal=normal, .mat=*mat};
         //printf("Tri indx: %d, %d, %d\n", f0, f1, f2);
         //printf("Create tri: "); print_tri(tri);

@@ -27,7 +27,7 @@ bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interv
     const double EPSILON = 0.0000001;
 
     Vec3 dir = unit_vec(r->direction);
-    Vec3 edge1 = diff_vec3(triangle->v2, triangle->v1);
+    Vec3 edge1 = diff_vec3 (triangle->v2, triangle->v1);
     Vec3 edge2 = diff_vec3(triangle->v3, triangle->v1);
 
     Vec3 rayVecXe2 = cross(dir, edge2);
@@ -35,9 +35,9 @@ bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interv
 
     // Full compare
     // This ray is parallel to this triangle.
-    if (det > -EPSILON && det < EPSILON) return false;
+    //if (det > -EPSILON && det < EPSILON) return false;
     // "Back facing compare
-    //if (det < EPSILON) 
+    if (det < EPSILON) return false;
 
     double invDet = 1.0 / det;
     Vec3 s = diff_vec3(r->origin, triangle->v1);

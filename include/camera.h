@@ -7,6 +7,7 @@
 
 #include "material.h"
 #include "sphere.h"
+#include "vec3.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>

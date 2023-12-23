@@ -29,7 +29,7 @@ AABB create_aabb_for_point(Point3 a, Point3 b) {
     return bbox;
 }
 
-const double EPSILON = 0.0001;
+const double EPSILON = 0.001;
 
 AABB create_aabb_for_point3(Point3 a, Point3 b, Point3 c) {
     AABB bbox = {

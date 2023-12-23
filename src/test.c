@@ -9,8 +9,8 @@
 
 int main() {
     TinyObjData data = {0};
-    //int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
-    int ret = get_obj_data_from_file("assets/cube.obj", &data);
+    int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
+    //int ret = get_obj_data_from_file("assets/cube.obj", &data);
     if (ret == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
@@ -76,7 +76,6 @@ int main() {
     BvhNode* bvh = build_bvh_tri(triangles, n_tris);
     double overlap = calculate_total_overlap(bvh);
     printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(bvh), overlap);
-    print_bvh(bvh, 0);
 
     for (int i = 1; i < 5; i++) {
         clock_t tik = clock();
@@ -88,7 +87,7 @@ int main() {
 
         int num_rays = camera.image_height * camera.image_width * camera.samples_per_pixel;
         double int_per_ray = (double) num_intersects / num_rays;
-        printf("Drew frame: [%d rays,  %.2f tests/ray, %.2f ms, %.2ff fps]\n", num_rays, int_per_ray, 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
+        printf("Drew frame: [%d rays,  %.2f tests/ray, %.2f ms, %.2f fps]\n", num_rays, int_per_ray, 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
     }
 
     // Run until user quits

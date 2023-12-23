@@ -22,7 +22,6 @@ BvhNode* create_random_spheres(int max_spheres);
 void create_random_spheres_arr(Sphere *spheres);
 void update_camera(Vec3 delta, Camera *camera);
 
-
 int main() {
     Sphere sphere_list[500];
 
@@ -72,7 +71,7 @@ int main() {
             }
         }
     }
-    BvhNode *world = build_bvh(sphere_list, 150);
+    BvhNode *world = build_bvh(sphere_list, 4);
     Camera camera;
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
 
@@ -83,7 +82,6 @@ int main() {
 
     double overlap = calculate_total_overlap(world);
     printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
-    print_bvh(world, 0);
 
     // Run until user quits
     int quit = 0;
@@ -93,36 +91,31 @@ int main() {
         while (SDL_PollEvent(&event)) {
             clock_t tik = clock();
             num_intersects = 0;
+            Vec3 delta;
             switch( event.type ){
                 case SDL_KEYDOWN:
                     switch( event.key.keysym.sym ){
                         case SDLK_LEFT:
-                            update_camera((Vec3) {-0.3, 0.0, 0.0}, &camera);
-                            //render_bvh(&camera, world, surface, &num_intersects);
-                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
-                            SDL_UpdateWindowSurface(window);
+                            delta = (Vec3) {-0.3, 0.0, 0.0};
                             break;
                         case SDLK_RIGHT:
-                            update_camera((Vec3) {0.3, 0.0, 0.0}, &camera);
-                            //render_bvh(&camera, world, surface, &num_intersects);
-                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
-                            SDL_UpdateWindowSurface(window);
+                            delta = (Vec3) {0.3, 0.0, 0.0};
                             break;
                         case SDLK_UP:
-                            update_camera((Vec3) {0.0, 0.3, 0.0}, &camera);
-                            //render_bvh(&camera, world, surface, &num_intersects);
-                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
-                            SDL_UpdateWindowSurface(window);
+                            delta = (Vec3) {0.0, 0.3, 0.0};
                             break;
                         case SDLK_DOWN:
-                            update_camera((Vec3) {0.0, -0.3, 0.0}, &camera);
-                            //render_bvh(&camera, world, surface, &num_intersects);
-                            render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
-                            SDL_UpdateWindowSurface(window);
+                            delta = (Vec3) {0.0, -0.3, 0.0};
                             break;
                         default:
+                            delta = (Vec3) {0};
                             break;
                     }
+                    update_camera(delta, &camera);
+                    render_bvh(&camera, world, surface, &num_intersects);
+                    //render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
+                    SDL_UpdateWindowSurface(window);
+
                     clock_t tok = clock();
 
                     int num_rays = camera.image_height * camera.image_width * camera.samples_per_pixel;
@@ -255,7 +248,7 @@ void update_camera(Vec3 lookat_delta, Camera *camera) {
     double aspect_ratio = 16.0 / 9.0;
     int image_width = IMAGE_WIDTH;
     int samples_per_pixel = 3;
-    int max_depth = 3;
+    int max_depth = 8;
     double vfov = 20;
     Point3 lookfrom = {13, 2, 3};
     Vec3 vup = {0, 1, 0};

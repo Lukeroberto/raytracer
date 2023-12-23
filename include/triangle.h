@@ -21,9 +21,7 @@ typedef struct TriangleMesh {
 } TriangleMesh;
 
 AABB create_aabb_for_triangle(const Triangle* s) {
-    AABB b1 = create_aabb_for_point(s->v1, s->v2);
-    AABB b2 = create_aabb_for_point(s->v1, s->v2);
-    return create_aabb_for_aabb(&b1, &b2);
+    return create_aabb_for_point3(s->v1, s->v2, s->v3);
 }
 
 Point3 center(const Triangle t) {
@@ -49,7 +47,7 @@ bool ray_intersect_triangle(const Ray *r, const Triangle *triangle, const Interv
     // This ray is parallel to this triangle.
     //if (det > -EPSILON && det < EPSILON) return false;
     // "Back facing compare
-    if (det < EPSILON) return false;
+    if (det <= EPSILON) return false;
 
     double invDet = 1.0 / det;
     Vec3 s = diff_vec3(r->origin, triangle->v1);

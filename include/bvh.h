@@ -92,50 +92,6 @@ void free_bvh(BvhNode *node) {
     free(node);
 }
 
-BvhNode* build_bvh_recursive(Sphere spheres[], int start, int end, int depth) {
-    if (start == end) {
-        // Create a leaf node
-        BvhNode* leaf = (BvhNode*)malloc(sizeof(BvhNode));
-        leaf->sphere = &spheres[start];
-        leaf->triangle = NULL;
-        leaf->bbox = create_aabb_for_sphere(leaf->sphere); 
-        leaf->left = leaf->right = NULL;
-        return leaf;
-    }
-
-    // Split spheres and create internal node
-    int mid = (end + start) / 2;
-    BvhNode* node = (BvhNode*)malloc(sizeof(BvhNode));
-    node->left = build_bvh_recursive(spheres, start, mid, depth + 1);
-    node->right = build_bvh_recursive(spheres, mid + 1, end, depth + 1);
-    node->bbox = create_aabb_for_aabb(&node->left->bbox, &node->right->bbox); 
-    node->sphere = NULL;
-    node->triangle = NULL;
-    return node;
-}
-
-
-BvhNode* build_bvh_recursive_tri(Triangle tris[], int start, int end, int depth) {
-    if (start == end) {
-        // Create a leaf node
-        BvhNode* leaf = (BvhNode*)malloc(sizeof(BvhNode));
-        leaf->sphere = NULL;
-        leaf->triangle = &tris[start];
-        leaf->bbox = create_aabb_for_triangle(leaf->triangle); 
-        leaf->left = leaf->right = NULL;
-        return leaf;
-    }
-
-    // Split spheres and create internal node
-    int mid = (start + end) / 2;
-    BvhNode* node = (BvhNode*)malloc(sizeof(BvhNode));
-    node->left = build_bvh_recursive_tri(tris, start, mid, depth + 1);
-    node->right = build_bvh_recursive_tri(tris, mid + 1, end, depth + 1);
-    node->bbox = create_aabb_for_aabb(&node->left->bbox, &node->right->bbox); 
-    node->sphere = NULL;
-    return node;
-}
-
 int sortAxis;
 
 int compareCentroids(const void* a, const void* b) {
@@ -283,13 +239,11 @@ BvhNode* build_bvh_fast(Triangle triangles[], int length, int depth) {
 
 
 BvhNode* build_bvh(Sphere spheres[], int length) {
-    //return build_bvh_sphere_fast(spheres, length, 0);
-    return build_bvh_recursive(spheres, 0, length, 0);
+    return build_bvh_sphere_fast(spheres, length, 0);
 }
 
 BvhNode* build_bvh_tri(Triangle triangles[], int length) {
-    //return build_bvh_fast(triangles, length, 0);
-    return build_bvh_recursive_tri(triangles, 0, length, 0);
+    return build_bvh_fast(triangles, length, 0);
 }
 
 bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitRecord *record, int *num_intersects, int depth) {
@@ -305,7 +259,6 @@ bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitR
 
     // Check if this is a leaf node
     if (node->left == NULL && node->right == NULL && (node->sphere != NULL || node->triangle != NULL)) {
-        printf("testing leaf\n");
         // Test intersection with the sphere at this leaf node
         if (node->sphere != NULL) {
             return ray_intersect_sphere(ray, node->sphere, &ray_t, record, num_intersects);

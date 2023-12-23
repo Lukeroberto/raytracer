@@ -5,7 +5,7 @@
 * [ ] add emissive objects, overall more cohesive material types
 * [x] implement BVH for spheres
 * [x] support loading in triangle meshes
-* [ ] speed up triangle meshes with BVH support
+* [x] speed up triangle meshes with BVH support
 * [ ] debug/visualize BVH by implementing ray-quad intersection
 * [ ] support fully keyboard, ie aswd for movement, up/down/left/right or mouse for camera angle
 * [ ] optionally run on more than 1 core

@@ -13,7 +13,7 @@
       "-Wno-unused-parameter",
       "-Wno-unused-function",
       "-Wno-sign-conversion",
-      "-fsanitize=undefined,address",
+      "-pedantic",
       "-o",
       "raytracer",
       "./src/main.c"

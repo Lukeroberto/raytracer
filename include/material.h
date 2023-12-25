@@ -21,6 +21,20 @@ bool scatter_lambertian(const Material *material, const HitRecord *rec, Color *a
     return true;
 }
 
+bool scatter_lambertian_texture(const Material *material, const HitRecord *rec, Color *attenuation, Ray *scattered) {
+    Vec3 random_unit_vec = random_unit_vector();
+    Vec3 scatter_direction = add_vec3(rec->normal, random_unit_vec);
+    if (near_zero(scatter_direction)) {
+        scatter_direction = rec->normal;
+    }
+
+    Ray scattered_ray = {rec->p, scatter_direction};
+    *scattered = scattered_ray;
+    *attenuation = value_checker(0, 0, &rec->p, &material->texture);
+
+    return true;
+}
+
 bool scatter_metal(const Material *material, const Ray *ray_in, const HitRecord *rec, Color *attenuation, Ray *scattered) {
     Vec3 unit = unit_vec(ray_in->direction);
     Vec3 reflected = reflect(unit, rec->normal);
@@ -69,6 +83,9 @@ bool scatter(const Material *material, const Ray *ray_in, const HitRecord *rec, 
         bool ret;
         case LAMBERTIAN:
             ret = scatter_lambertian(material, rec, attenuation, scattered);
+            return ret;
+        case LAMBERTIAN_TEXTURE:
+            ret = scatter_lambertian_texture(material, rec, attenuation, scattered);
             return ret;
         case METAL:
             ret = scatter_metal(material, ray_in, rec, attenuation, scattered);

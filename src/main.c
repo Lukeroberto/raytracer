@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "bvh.h"
+#include "texture.h"
 #include "utils.h"
 #include "types.h"
 
@@ -41,7 +42,7 @@ int main(int argc, char *argv[]) {
         printf("Running spheres testcase.\n");
         Sphere sphere_list[500] = {0};
         create_random_spheres_arr(sphere_list);
-        world = build_bvh(sphere_list, 100);
+        world = build_bvh(sphere_list, 4);
     } else if (strcmp("mesh", argv[1]) == 0) {
 
         TinyObjData data = {0};
@@ -146,7 +147,14 @@ int main(int argc, char *argv[]) {
 
 void create_random_spheres_arr(Sphere *sphere_list) {
     int num_spheres = 0;
-    Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
+    Material ground_material = {
+        .type=LAMBERTIAN_TEXTURE, 
+        .texture=(CheckerTexture) {
+            .inv_scale = 0.32,
+            .even = {0.2, 0.3, 0.1},
+            .odd = {0.9, 0.9, 0.9}
+        }
+    };
     sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
     num_spheres++;
 

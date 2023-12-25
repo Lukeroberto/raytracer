@@ -50,6 +50,14 @@ AABB create_aabb_for_aabb(const AABB *a, const AABB *b) {
    };
 }
 
+Point3 center_aabb(const AABB *bbox) {
+    return (Point3) {
+        .x = (bbox->x.max - bbox->x.min) / 2,
+        .y = (bbox->y.max - bbox->y.min) / 2,
+        .z = (bbox->z.max - bbox->z.min) / 2,
+    };
+}
+
 Interval get_axis_from_aabb(const AABB *bbox, int n) {
     if (n == 1) return bbox->y;
     if (n == 2) return bbox->z;

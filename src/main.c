@@ -12,8 +12,9 @@
 
 #include "sphere.h"
 #include "camera.h"
+#include "scene.h"
+#include "triangle.h"
 
-#include <SDL2/SDL.h>
 #include <time.h>
 
 #define IMAGE_WIDTH 720
@@ -22,57 +23,60 @@ BvhNode* create_random_spheres(int max_spheres);
 void create_random_spheres_arr(Sphere *spheres);
 void update_camera(Vec3 delta, Camera *camera);
 
-int main() {
-    Sphere sphere_list[500];
+int main(int argc, char *argv[]) {
 
-    int num_spheres = 0;
-    const Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
-    sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
-    num_spheres++;
-
-    const Material mat1 = {.type=DIELECTRIC, .ir=1.5};
-    sphere_list[num_spheres] = make_sphere((Point3) {0, 1, 0}, 1.0, mat1);
-    num_spheres++;
-
-    const Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
-    sphere_list[num_spheres] = make_sphere((Point3) {-4, 1, 0}, 1.0, mat2);
-    num_spheres++;
-
-    const Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
-    sphere_list[num_spheres] = make_sphere((Point3) {4, 1, 0}, 1.0, mat3);
-    num_spheres++;
-
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
-            double choose_mat = random_double();
-            Point3 center = {a+ 0.9*random_double(), 0.2, b + 0.9*random_double()};
-
-            Vec3 vec = diff_vec3(center, (Point3) {4, 0.2, 0});
-            if (length(vec) > 0.9) {
-                if (choose_mat < 0.8) {
-                    // Diffuse
-                    Color albedo = random_vec();
-                    Material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
-                    num_spheres++;
-                } else if (choose_mat < 0.90) {
-                    // Metal
-                    Color albedo = random_vec_interval(0.5, 1);
-                    double fuzz = random_double_interval(0, 0.5);
-                    Material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, metal_mat);
-                    num_spheres++;
-                } else {
-                    // Glass
-                    Material glass_mat = {.type=DIELECTRIC, .ir=1.5};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, glass_mat);
-                    num_spheres++;
-                }
-            }
-        }
+    if (argc < 2) {
+        printf("Invalid use of this renderer. Please provide a testcase to run.\n ");
+        return EXIT_FAILURE;
     }
-    BvhNode *world = build_bvh(sphere_list, 4);
+
+    printf("Arguments recieved: \n");
+    for (int i = 0; i < argc; i++) {
+        printf("\targv[%d]: %s\n", i, argv[i]);
+    }
+
+    BvhNode *world;
+    Point3 world_center = {0.0, 0.0, 0.0};
+    if (strcmp("spheres", argv[1]) == 0) {
+        printf("Running spheres testcase.\n");
+        Sphere sphere_list[500] = {0};
+        create_random_spheres_arr(sphere_list);
+        world = build_bvh(sphere_list, 100);
+    } else if (strcmp("mesh", argv[1]) == 0) {
+
+        TinyObjData data = {0};
+        //int ret = get_obj_data_from_file("assets/low_poly_tree/Lowpoly_tree_sample.obj", &data);
+        //int ret = get_obj_data_from_file("assets/teapot.obj", &data);
+        int ret = get_obj_data_from_file("assets/cube.obj", &data);
+        //int ret = get_obj_data_from_file("assets/model.obj", &data);
+        //int ret = get_obj_data_from_file("assets/cow-nonormals.obj", &data);
+        //int ret = get_obj_data_from_file("assets/LowPolyModels/Low-Poly_Models.obj", &data);
+
+        if (ret == EXIT_FAILURE) {
+            return EXIT_FAILURE;
+        }
+        printf("Number of triangles: %d\n", data.attrib.num_faces / 3);
+        printf("Number of vertices: %d\n", data.attrib.num_vertices);
+        printf("num_face_num_verts: %d\n", data.attrib.num_face_num_verts);
+        printf("Number of normals: %d\n\n", data.attrib.num_normals);
+
+        #define NUM_TRIANGLES 6500
+        int n_tris = data.attrib.num_faces / 3;
+
+        Triangle triangles[NUM_TRIANGLES] = {0};
+        TriangleMesh mesh = {.triangles=triangles, .size=NUM_TRIANGLES};
+        Material mat = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
+        convert_obj_data_to_mesh(&data, &mesh, &mat);
+        world = build_bvh_tri(triangles, n_tris);
+        world_center = center_aabb(&world->bbox);
+    } else {
+        printf("Improper testcase provided, exiting.\n");
+        return EXIT_FAILURE;
+    }
+
+
     Camera camera;
+    camera.lookat = world_center;
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
 
     // Setup SDL objects
@@ -113,7 +117,6 @@ int main() {
                     }
                     update_camera(delta, &camera);
                     render_bvh(&camera, world, surface, &num_intersects);
-                    //render_spheres(&camera, 151, sphere_list, surface, &num_intersects);
                     SDL_UpdateWindowSurface(window);
 
                     clock_t tok = clock();

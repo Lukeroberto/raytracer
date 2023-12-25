@@ -24,7 +24,7 @@ AABB create_aabb_for_triangle(const Triangle* s) {
     return create_aabb_for_point3(s->v1, s->v2, s->v3);
 }
 
-Point3 center(const Triangle t) {
+Point3 center_triangle(const Triangle t) {
     return (Point3) {
         .x = (t.v1.x + t.v2.x + t.v3.x) / 3,
         .y = (t.v1.y + t.v2.y + t.v3.y) / 3,

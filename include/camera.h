@@ -9,7 +9,6 @@
 #include "sphere.h"
 #include "vec3.h"
 
-#include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_render.h>

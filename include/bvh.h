@@ -85,10 +85,13 @@ void free_bvh(BvhNode *node) {
     }
 
     // Recursively free left and right subtrees
+
     free_bvh(node->left);
     free_bvh(node->right);
 
     // Finally, free the node itself
+    free(node->sphere);
+    free(node->triangle);
     free(node);
 }
 
@@ -201,7 +204,7 @@ BvhNode* build_bvh_fast(Triangle triangles[], int length, int depth) {
     // Calculate centroids to determine splitting point
     Vec3* centroids = (Vec3*)malloc(sizeof(Vec3) * length);
     for (int i = 0; i < length; ++i) {
-        centroids[i] = center(triangles[i]);
+        centroids[i] = center_triangle(triangles[i]);
     }
 
     // Choose the axis to split based on the depth

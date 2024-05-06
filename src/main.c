@@ -19,6 +19,8 @@
 #include <time.h>
 
 #define IMAGE_WIDTH 720
+#define NUM_TRIANGLES 6500
+#define NUM_SPHERES 500
 
 BvhNode* create_random_spheres(int max_spheres);
 void create_random_spheres_arr(Sphere *spheres);
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]) {
     Point3 world_center = {0.0, 0.0, 0.0};
     if (strcmp("spheres", argv[1]) == 0) {
         printf("Running spheres testcase.\n");
-        Sphere sphere_list[500] = {0};
+        Sphere sphere_list[NUM_SPHERES] = {0};
         create_random_spheres_arr(sphere_list);
         world = build_bvh(sphere_list, 4);
     } else if (strcmp("mesh", argv[1]) == 0) {
@@ -61,7 +63,6 @@ int main(int argc, char *argv[]) {
         printf("num_face_num_verts: %d\n", data.attrib.num_face_num_verts);
         printf("Number of normals: %d\n\n", data.attrib.num_normals);
 
-        #define NUM_TRIANGLES 6500
         int n_tris = data.attrib.num_faces / 3;
 
         Triangle triangles[NUM_TRIANGLES] = {0};

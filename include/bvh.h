@@ -90,8 +90,8 @@ void free_bvh(BvhNode *node) {
     free_bvh(node->right);
 
     // Finally, free the node itself
-    free(node->sphere);
-    free(node->triangle);
+    free((Sphere*) node->sphere);
+    free((Triangle*) node->triangle);
     free(node);
 }
 

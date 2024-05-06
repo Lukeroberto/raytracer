@@ -11,6 +11,8 @@ typedef struct AABB{
     Interval z;
 } AABB;
 
+AABB pad(AABB bbox);
+
 void print_aabb(const AABB *bbox) {
     printf("bbox: (x[%f, %f], y[%f, %f], z[%f, %f])\n", bbox->x.min, bbox->x.max, bbox->y.min, bbox->y.max, bbox->z.min, bbox->z.max);
 }
@@ -18,6 +20,15 @@ void print_aabb(const AABB *bbox) {
 AABB create_empty_aabb() {
     return (AABB){0};
 }
+
+AABB create_aabb_for_interval(Interval x, Interval y, Interval z) {
+    return (AABB) {
+        .x = x,
+        .y = y,
+        .z = z
+    };
+}
+
 
 AABB create_aabb_for_point(Point3 a, Point3 b) {
     AABB bbox = {
@@ -29,16 +40,14 @@ AABB create_aabb_for_point(Point3 a, Point3 b) {
     return bbox;
 }
 
-const double EPSILON = 0.001;
-
 AABB create_aabb_for_point3(Point3 a, Point3 b, Point3 c) {
     AABB bbox = {
-        .x = (Interval) {.min=fmin(fmin(a.x, b.x), c.x) - EPSILON, .max=fmax(fmax(a.x, b.x), c.x) + EPSILON},
-        .y = (Interval) {.min=fmin(fmin(a.y, b.y), c.y) - EPSILON, .max=fmax(fmax(a.y, b.y), c.y) + EPSILON},
-        .z = (Interval) {.min=fmin(fmin(a.z, b.z), c.z) - EPSILON, .max=fmax(fmax(a.z, b.z), c.z)+ EPSILON},
+        .x = (Interval) {.min=fmin(fmin(a.x, b.x), c.x), .max=fmax(fmax(a.x, b.x), c.x)},
+        .y = (Interval) {.min=fmin(fmin(a.y, b.y), c.y), .max=fmax(fmax(a.y, b.y), c.y)},
+        .z = (Interval) {.min=fmin(fmin(a.z, b.z), c.z), .max=fmax(fmax(a.z, b.z), c.z)},
     };
 
-    return bbox;
+    return pad(bbox);
 }
 
 
@@ -63,6 +72,16 @@ Interval get_axis_from_aabb(const AABB *bbox, int n) {
     if (n == 2) return bbox->z;
 
     return bbox->x;
+}
+
+AABB pad(AABB aabb) {
+    // Return an AABB that has no side narrower than some delta, padding if necessary.
+    double delta = 0.0001;
+    Interval new_x = (size_interval(aabb.x) >= delta) ? aabb.x : expand_interval(delta, aabb.x);
+    Interval new_y = (size_interval(aabb.y) >= delta) ? aabb.y : expand_interval(delta, aabb.y);
+    Interval new_z = (size_interval(aabb.z) >= delta) ? aabb.z : expand_interval(delta, aabb.z);
+
+    return create_aabb_for_interval(new_x, new_y, new_z);
 }
 
 bool hit_aabb(const Ray *ray, Interval ray_t, const AABB *bbox) {

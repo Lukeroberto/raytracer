@@ -33,11 +33,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    printf("Arguments recieved: \n");
-    for (int i = 0; i < argc; i++) {
-        printf("\targv[%d]: %s\n", i, argv[i]);
-    }
-
     BvhNode *world;
     Point3 world_center = {0.0, 0.0, 0.0};
     if (strcmp("spheres", argv[1]) == 0) {
@@ -86,8 +81,8 @@ int main(int argc, char *argv[]) {
     SDL_Window * window = SDL_CreateWindow("Raytracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, camera.image_width, camera.image_height, 0);
     SDL_Surface * surface = SDL_GetWindowSurface(window);
 
-    double overlap = calculate_total_overlap(world);
-    printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
+    //double overlap = calculate_total_overlap(world);
+    //printf("num nodes in bvh: %d, overlap: %f\n", count_bvh(world), overlap);
 
     // Run until user quits
     int quit = 0;
@@ -95,7 +90,6 @@ int main(int argc, char *argv[]) {
     SDL_Event event;
     while (!quit) {
         while (SDL_PollEvent(&event)) {
-            clock_t tik = clock();
             num_intersects = 0;
             Vec3 delta;
             switch( event.type ){
@@ -118,14 +112,6 @@ int main(int argc, char *argv[]) {
                             break;
                     }
                     update_camera(delta, &camera);
-                    render_bvh(&camera, world, surface, &num_intersects);
-                    SDL_UpdateWindowSurface(window);
-
-                    clock_t tok = clock();
-
-                    int num_rays = camera.image_height * camera.image_width * camera.samples_per_pixel;
-                    double int_per_ray = (double) num_intersects / num_rays;
-                    printf("Drew frame: [%d rays,  %.2f tests/ray, %.2f ms, %.2f fps]\n", num_rays, int_per_ray, 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC), CLOCKS_PER_SEC / (double) (tok - tik));
                     break;
 
                 case SDL_QUIT:
@@ -136,7 +122,20 @@ int main(int argc, char *argv[]) {
                     break;
             }
         }
+        clock_t tik = clock();
+        render_bvh(&camera, world, surface, &num_intersects);
+        SDL_UpdateWindowSurface(window);
+        clock_t tok = clock();
+
+        int num_rays = camera.image_height * camera.image_width * camera.samples_per_pixel;
+        double int_per_ray = (double) num_intersects / num_rays;
+        double ms = 1000.0 * ((double) (tok - tik) / CLOCKS_PER_SEC);
+        double fps = CLOCKS_PER_SEC / (double) (tok - tik); 
+        char c[256];
+        sprintf(c, "Frame: [%d rays, %.2f tests/ray, %.2f ms, %.2f fps]", num_rays, int_per_ray, ms, fps);
+        SDL_SetWindowTitle(window, c);
     }
+    printf("Shutting down renderer.\n");
 
     // Cleanup 
     free_bvh(world);

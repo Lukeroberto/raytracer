@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "aabb.h"
+#include "quad.h"
 #include "sphere.h"
 #include "triangle.h"
 
@@ -12,8 +13,10 @@ typedef struct BvhNode {
     AABB bbox;
     const Sphere *sphere;
     const Triangle *triangle;
+    const Quad *quad;
     int triangle_count;
     int sphere_count;
+    int quad_count;
 } BvhNode;
 
 void print_bvh(const BvhNode *node, int level) {

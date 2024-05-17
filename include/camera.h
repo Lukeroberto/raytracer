@@ -2,6 +2,7 @@
 
 #include "bvh.h"
 #include "color.h"
+#include "quad.h"
 #include "triangle.h"
 #include "utils.h"
 
@@ -156,6 +157,30 @@ Color ray_color_triangle(const Ray *r, int depth, int num_triangles, Triangle me
     return sky(unit_vec(r->direction));
 }
 
+Color ray_color_quad(const Ray *r, int depth, int num_quads, Quad quads[], int *num_intersects) {
+    HitRecord rec = {0};
+    if (depth <= 0) {
+        Color no_light_gathered = {0, 0, 0};
+        return no_light_gathered;
+    }
+    Interval world_int = {.min=0.001, .max=INFINITY};
+    if (ray_intersect_quad_arr(r, num_quads, quads, &world_int, &rec, num_intersects)) {
+        Ray scattered;
+        Color attenuation;
+        if (scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
+            Color color = ray_color_quad(&scattered, depth-1, num_quads, quads, num_intersects);
+            return mult_vec3(color, attenuation);
+        }
+
+        // Should never happen, scattering always returns true
+        printf("Something bad happened, no scattering for mat %d\n", rec.mat.type);
+        Color no_light_gathered = {0, 0, 0};
+        return no_light_gathered;
+    }
+
+    return sky(unit_vec(r->direction));
+}
+
 Color ray_color_bvh(Ray *r, int depth, BvhNode *bvh, int *num_intersects) {
     HitRecord rec = {0};
     if (depth <= 0) {
@@ -243,6 +268,21 @@ int render_triangles(Camera *camera, int num_triangles, Triangle mesh[], SDL_Sur
         }
     }
 
+    return EXIT_SUCCESS;
+}
+
+int render_quads(Camera *camera, int num_quads, Quad quads[], SDL_Surface *surface, int *num_intersects) {
+    for (int j = 0; j < camera->image_height; ++j) {
+        for (int i = 0; i < camera->image_width; ++i) {
+            Color pixel_color = {0, 0, 0};
+            for (int sample = 0; sample < camera->samples_per_pixel; ++sample) {
+                Ray r = get_ray(i, j, camera);
+                Color ray_c = ray_color_quad(&r, camera->max_depth, num_quads, quads, num_intersects);
+                pixel_color = add_vec3(pixel_color, ray_c);
+            }
+            set_pixel_buffer(pixel_color, camera->samples_per_pixel, i + j * surface->w, surface);
+        }
+    }
     return EXIT_SUCCESS;
 }
 

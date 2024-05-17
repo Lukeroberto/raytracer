@@ -2,4 +2,6 @@ compile_commands.json
 raytracer
 test
 .cache
+assets
+gmon*
 

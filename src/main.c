@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "bvh.h"
+#include "quad.h"
 #include "texture.h"
 #include "utils.h"
 #include "types.h"
@@ -15,6 +16,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "triangle.h"
+#include "vec3.h"
 
 #include <time.h>
 
@@ -34,6 +36,7 @@ int main(int argc, char *argv[]) {
     }
 
     BvhNode *world;
+    Quad quad_list[5] = {0};
     Point3 world_center = {0.0, 0.0, 0.0};
     if (strcmp("spheres", argv[1]) == 0) {
         printf("Running spheres testcase.\n");
@@ -66,15 +69,42 @@ int main(int argc, char *argv[]) {
         convert_obj_data_to_mesh(&data, &mesh, &mat);
         world = build_bvh_tri(triangles, n_tris);
         world_center = center_aabb(&world->bbox);
+    } else if (strcmp("quads", argv[1]) == 0) {
+        printf("Running quads testcase.\n");
+        Material left_red     = {.type=LAMBERTIAN, .albedo= (Color) {1.0, 0.2, 0.2}};
+        Material back_green   = {.type=LAMBERTIAN, .albedo= (Color) {0.2, 1.0, 0.2}};
+        Material right_blue   = {.type=LAMBERTIAN, .albedo= (Color) {0.2, 0.2, 1.0}};
+        Material upper_orange = {.type=LAMBERTIAN, .albedo= (Color) {1.0, 0.5, 0.0}};
+        Material lower_teal   = {.type=LAMBERTIAN, .albedo= (Color) {0.2, 0.8, 0.8}};
+
+        quad_list[0] = create_quad((Point3) {-3,-2, 5}, (Vec3) {0, 0,-4}, (Vec3) {0, 4, 0}, left_red);
+        quad_list[1] = create_quad((Point3) {-2,-2, 0}, (Vec3) {4, 0, 0}, (Vec3) {0, 4, 0}, back_green);
+        quad_list[2] = create_quad((Point3) { 3,-2, 1}, (Vec3) {0, 0, 4}, (Vec3) {0, 4, 0}, right_blue);
+        quad_list[3] = create_quad((Point3) {-2, 3, 1}, (Vec3) {4, 0, 0}, (Vec3) {0, 0, 4}, upper_orange);
+        quad_list[4] = create_quad((Point3) {-2,-3, 5}, (Vec3) {4, 0, 0}, (Vec3) {0, 0,-4}, lower_teal);
+
     } else {
         printf("Improper testcase provided, exiting.\n");
         return EXIT_FAILURE;
     }
 
 
-    Camera camera;
+    Camera camera = {0};
     camera.lookat = world_center;
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
+
+    if (strcmp("quads", argv[1]) == 0) {
+        printf("Modifying camera position for quads. \n");
+        camera.aspect_ratio = 1.0;
+        camera.image_width = 400;
+        camera.samples_per_pixel = 100;
+        camera.max_depth = 50;
+        camera.vfov = 80;
+        camera.lookfrom = (Point3) {0, 0, 9};
+        camera.lookat = (Point3) {0, 0, 0};
+        camera.vup = (Vec3) {0, 1, 0};
+        camera.defocus_angle = 0;
+    }
 
     // Setup SDL objects
     SDL_Init(SDL_INIT_VIDEO);
@@ -111,7 +141,7 @@ int main(int argc, char *argv[]) {
                             delta = (Vec3) {0};
                             break;
                     }
-                    update_camera(delta, &camera);
+                    //update_camera(delta, &camera);
                     break;
 
                 case SDL_QUIT:
@@ -123,7 +153,11 @@ int main(int argc, char *argv[]) {
             }
         }
         clock_t tik = clock();
-        render_bvh(&camera, world, surface, &num_intersects);
+        if (strcmp("quads", argv[1]) == 0) {
+            render_quads(&camera, 5, quad_list, surface, &num_intersects);
+        } else{
+            render_bvh(&camera, world, surface, &num_intersects);
+        }
         SDL_UpdateWindowSurface(window);
         clock_t tok = clock();
 

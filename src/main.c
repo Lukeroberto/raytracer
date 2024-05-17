@@ -7,7 +7,6 @@
 #include <stdlib.h>
 
 #include "bvh.h"
-#include "quad.h"
 #include "texture.h"
 #include "utils.h"
 #include "types.h"
@@ -24,7 +23,6 @@
 #define NUM_TRIANGLES 6500
 #define NUM_SPHERES 500
 
-BvhNode* create_random_spheres(int max_spheres);
 void create_random_spheres_arr(Sphere *spheres);
 void update_camera(Vec3 delta, Camera *camera);
 
@@ -36,13 +34,15 @@ int main(int argc, char *argv[]) {
     }
 
     BvhNode *world;
-    Quad quad_list[5] = {0};
-    Point3 world_center = {0.0, 0.0, 0.0};
     if (strcmp("spheres", argv[1]) == 0) {
         printf("Running spheres testcase.\n");
         Sphere sphere_list[NUM_SPHERES] = {0};
         create_random_spheres_arr(sphere_list);
-        world = build_bvh(sphere_list, 4);
+        Geometry geoms[NUM_SPHERES] = {0};
+        for (int i = 0; i < NUM_SPHERES; i++) {
+            geoms[i] = make_from_sphere(&sphere_list[i]);
+        }
+        world = build_bvh(geoms, 4);
     } else if (strcmp("mesh", argv[1]) == 0) {
 
         TinyObjData data = {0};
@@ -67,8 +67,11 @@ int main(int argc, char *argv[]) {
         TriangleMesh mesh = {.triangles=triangles, .size=NUM_TRIANGLES};
         Material mat = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
         convert_obj_data_to_mesh(&data, &mesh, &mat);
-        world = build_bvh_tri(triangles, n_tris);
-        world_center = center_aabb(&world->bbox);
+        Geometry geoms[NUM_TRIANGLES] = {0};
+        for (int i = 0; i < NUM_TRIANGLES; i++) {
+            geoms[i] = make_from_triangle(&triangles[i]);
+        }
+        world = build_bvh(geoms, n_tris);
     } else if (strcmp("quads", argv[1]) == 0) {
         printf("Running quads testcase.\n");
         Material left_red     = {.type=LAMBERTIAN, .albedo= (Color) {1.0, 0.2, 0.2}};
@@ -77,11 +80,17 @@ int main(int argc, char *argv[]) {
         Material upper_orange = {.type=LAMBERTIAN, .albedo= (Color) {1.0, 0.5, 0.0}};
         Material lower_teal   = {.type=LAMBERTIAN, .albedo= (Color) {0.2, 0.8, 0.8}};
 
+        Quad quad_list[5] = {0};
         quad_list[0] = create_quad((Point3) {-3,-2, 5}, (Vec3) {0, 0,-4}, (Vec3) {0, 4, 0}, left_red);
         quad_list[1] = create_quad((Point3) {-2,-2, 0}, (Vec3) {4, 0, 0}, (Vec3) {0, 4, 0}, back_green);
         quad_list[2] = create_quad((Point3) { 3,-2, 1}, (Vec3) {0, 0, 4}, (Vec3) {0, 4, 0}, right_blue);
         quad_list[3] = create_quad((Point3) {-2, 3, 1}, (Vec3) {4, 0, 0}, (Vec3) {0, 0, 4}, upper_orange);
         quad_list[4] = create_quad((Point3) {-2,-3, 5}, (Vec3) {4, 0, 0}, (Vec3) {0, 0,-4}, lower_teal);
+        Geometry geoms[5] = {0};
+        for (int i = 0; i < 5; i++) {
+            geoms[i] = make_from_quad(&quad_list[i]);
+        }
+        world = build_bvh(geoms, 5);
 
     } else {
         printf("Improper testcase provided, exiting.\n");
@@ -90,7 +99,7 @@ int main(int argc, char *argv[]) {
 
 
     Camera camera = {0};
-    camera.lookat = world_center;
+    camera.lookat = center_aabb(&world->bbox);
     update_camera((Vec3) {0.0, 0.0, 0.0}, &camera);
 
     if (strcmp("quads", argv[1]) == 0) {
@@ -141,7 +150,7 @@ int main(int argc, char *argv[]) {
                             delta = (Vec3) {0};
                             break;
                     }
-                    //update_camera(delta, &camera);
+                    update_camera(delta, &camera);
                     break;
 
                 case SDL_QUIT:
@@ -153,11 +162,7 @@ int main(int argc, char *argv[]) {
             }
         }
         clock_t tik = clock();
-        if (strcmp("quads", argv[1]) == 0) {
-            render_quads(&camera, 5, quad_list, surface, &num_intersects);
-        } else{
-            render_bvh(&camera, world, surface, &num_intersects);
-        }
+        render_bvh(&camera, world, surface, &num_intersects);
         SDL_UpdateWindowSurface(window);
         clock_t tok = clock();
 
@@ -235,58 +240,6 @@ void create_random_spheres_arr(Sphere *sphere_list) {
     }
 }
 
-BvhNode* create_random_spheres(int max_spheres) {
-    // World
-    Sphere sphere_list[500];
-
-    int num_spheres = 0;
-    const Material ground_material = {.type=LAMBERTIAN, .albedo=(Color) {0.5, 0.5, 0.5}};
-    sphere_list[0] = make_sphere((Point3) {0, -1000, 0}, 1000, ground_material);
-    num_spheres++;
-
-    const Material mat1 = {.type=DIELECTRIC, .ir=1.5};
-    sphere_list[num_spheres] = make_sphere((Point3) {0, 1, 0}, 1.0, mat1);
-    num_spheres++;
-
-    const Material mat2 = {.type=LAMBERTIAN, .albedo=(Color) {0.4, 0.2, 0.1}};
-    sphere_list[num_spheres] = make_sphere((Point3) {-4, 1, 0}, 1.0, mat2);
-    num_spheres++;
-
-    const Material mat3 = {.type=METAL, .albedo=(Color) {0.7, 0.6, 0.5}, .fuzz=0.0};
-    sphere_list[num_spheres] = make_sphere((Point3) {4, 1, 0}, 1.0, mat3);
-    num_spheres++;
-
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
-            double choose_mat = random_double();
-            Point3 center = {a+ 0.9*random_double(), 0.2, b + 0.9*random_double()};
-
-            Vec3 vec = diff_vec3(center, (Point3) {4, 0.2, 0});
-            if (length(vec) > 0.9) {
-                if (choose_mat < 0.8) {
-                    // Diffuse
-                    Color albedo = random_vec();
-                    Material diffuse_mat = {.type=LAMBERTIAN, .albedo=albedo};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, diffuse_mat);
-                    num_spheres++;
-                } else if (choose_mat < 0.90) {
-                    // Metal
-                    Color albedo = random_vec_interval(0.5, 1);
-                    double fuzz = random_double_interval(0, 0.5);
-                    Material metal_mat = {.type=METAL, .albedo=albedo, .fuzz=fuzz};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, metal_mat);
-                    num_spheres++;
-                } else {
-                    // Glass
-                    Material glass_mat = {.type=DIELECTRIC, .ir=1.5};
-                    sphere_list[num_spheres] = make_sphere(center, 0.2, glass_mat);
-                    num_spheres++;
-                }
-            }
-        }
-    }
-    return build_bvh(sphere_list, max_spheres);
-}
 
 void update_camera(Vec3 lookat_delta, Camera *camera) {
     // Image

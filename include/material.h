@@ -80,20 +80,14 @@ bool scatter_dielectric(const Material *material, const Ray *ray_in, const HitRe
 
 bool scatter(const Material *material, const Ray *ray_in, const HitRecord *rec, Color *attenuation, Ray *scattered) {
     switch (material->type) {
-        bool ret;
         case LAMBERTIAN:
-            ret = scatter_lambertian(material, rec, attenuation, scattered);
-            return ret;
+            return scatter_lambertian(material, rec, attenuation, scattered);
         case LAMBERTIAN_TEXTURE:
-            ret = scatter_lambertian_texture(material, rec, attenuation, scattered);
-            return ret;
+            return scatter_lambertian_texture(material, rec, attenuation, scattered);
         case METAL:
-            ret = scatter_metal(material, ray_in, rec, attenuation, scattered);
-            return ret;
+            return scatter_metal(material, ray_in, rec, attenuation, scattered);
         case DIELECTRIC:
-            ret = scatter_dielectric(material, ray_in, rec, attenuation, scattered);
-            return ret;
+            return scatter_dielectric(material, ray_in, rec, attenuation, scattered);
     }
-
     return false;
 }

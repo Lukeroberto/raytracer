@@ -4,6 +4,7 @@
       "/usr/bin/gcc",
       "-c",
       "-I./include",
+      "-I./libraries",
       "-std=c2x",
       "-g3",
       "-Wall",

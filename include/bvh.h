@@ -3,20 +3,14 @@
 #include <stdlib.h>
 
 #include "aabb.h"
-#include "quad.h"
-#include "sphere.h"
-#include "triangle.h"
+#include "geometry.h"
 
 typedef struct BvhNode {
     struct BvhNode *left;
     struct BvhNode *right;
     AABB bbox;
-    const Sphere *sphere;
-    const Triangle *triangle;
-    const Quad *quad;
-    int triangle_count;
-    int sphere_count;
-    int quad_count;
+    Geometry *geom;
+    int geom_count;
 } BvhNode;
 
 void print_bvh(const BvhNode *node, int level) {
@@ -88,13 +82,13 @@ void free_bvh(BvhNode *node) {
     }
 
     // Recursively free left and right subtrees
-
     free_bvh(node->left);
     free_bvh(node->right);
 
+    
+    free((Geometry*) node->geom);
+
     // Finally, free the node itself
-    free((Sphere*) node->sphere);
-    free((Triangle*) node->triangle);
     free(node);
 }
 
@@ -114,36 +108,34 @@ int compareCentroids(const void* a, const void* b) {
 }
 
 // Function to build the BVH
-BvhNode* build_bvh_sphere_fast(Sphere spheres[], int length, int depth) {
+BvhNode* build_bvh_geoms(Geometry geoms[], int length, int depth) {
     BvhNode* node = (BvhNode*)malloc(sizeof(BvhNode));
     node->left = node->right = NULL;
-    node->triangle = NULL;
-    node->sphere = NULL;
-    node->sphere_count = 0;
+    node->geom = NULL;
+    node->geom_count = 0;
+
 
     if (length <= 0) {
         return node;
     }
 
     // Compute overall bounding box for this node
-    node->bbox = create_aabb_for_sphere(&spheres[0]);
+    node->bbox = create_aabb_for_geom(&geoms[0]);
+    // Calculate centroids to determine splitting point
+    Vec3* centroids = (Vec3*)malloc(sizeof(Vec3) * length);
     for (int i = 1; i < length; ++i) {
-        AABB tri_box = create_aabb_for_sphere(&spheres[i]);
-        node->bbox = create_aabb_for_aabb(&node->bbox, &tri_box);
+        AABB bounds = create_aabb_for_geom(&geoms[i]);
+        centroids[i] = center_aabb(&bounds);
+        node->bbox = create_aabb_for_aabb(&node->bbox, &bounds);
     }
 
-    // Base case: if there's only one triangle, this is a leaf node
+    // Base case: if there's only one geom, this is a leaf node
     if (length == 1) {
-        node->sphere = spheres;
-        node->sphere_count = 1;
+        node->geom = geoms;
+        node->geom_count = 1;
         return node;
     }
 
-    // Calculate centroids to determine splitting point
-    Vec3* centroids = (Vec3*)malloc(sizeof(Vec3) * length);
-    for (int i = 0; i < length; ++i) {
-        centroids[i] = spheres->center;
-    }
 
     // Choose the axis to split based on the depth
     Vec3 extent = diff_vec3((Vec3) {node->bbox.x.max, node->bbox.y.max, node->bbox.z.max}, (Vec3) {node->bbox.x.min, node->bbox.y.min, node->bbox.z.min});
@@ -157,86 +149,21 @@ BvhNode* build_bvh_sphere_fast(Sphere spheres[], int length, int depth) {
     // Split triangles into two groups at the median
     int median = length / 2;
 
-    Sphere* leftSpheres = (Sphere*)malloc(sizeof(Sphere) * median);
-    Sphere* rightSpheres = (Sphere*)malloc(sizeof(Sphere) * (length - median));
+    Geometry* left_geom = (Geometry*)malloc(sizeof(Geometry) * median);
+    Geometry* right_geom = (Geometry*)malloc(sizeof(Geometry) * (length - median));
     int leftCount = 0, rightCount = 0;
 
     for (int i = 0; i < length; ++i) {
         if (i < median) {
-            leftSpheres[leftCount++] = spheres[i];
+            left_geom[leftCount++] = geoms[i];
         } else {
-            rightSpheres[rightCount++] = spheres[i];
+            right_geom[rightCount++] = geoms[i];
         }
     }
 
     // Recursively build left and right children
-    node->left = build_bvh_sphere_fast(leftSpheres, leftCount, depth + 1);
-    node->right = build_bvh_sphere_fast(rightSpheres, rightCount, depth + 1);
-
-    free(centroids);
-
-    return node;
-}
-
-// Function to build the BVH
-BvhNode* build_bvh_fast(Triangle triangles[], int length, int depth) {
-    BvhNode* node = (BvhNode*)malloc(sizeof(BvhNode));
-    node->left = node->right = NULL;
-    node->triangle = NULL;
-    node->sphere = NULL;
-    node->triangle_count = 0;
-
-    if (length <= 0) {
-        return node;
-    }
-
-    // Compute overall bounding box for this node
-    node->bbox = create_aabb_for_triangle(&triangles[0]);
-    for (int i = 1; i < length; ++i) {
-        AABB tri_box = create_aabb_for_triangle(&triangles[i]);
-        node->bbox = create_aabb_for_aabb(&node->bbox, &tri_box);
-    }
-
-    // Base case: if there's only one triangle, this is a leaf node
-    if (length == 1) {
-        node->triangle = triangles;
-        node->triangle_count = 1;
-        return node;
-    }
-
-    // Calculate centroids to determine splitting point
-    Vec3* centroids = (Vec3*)malloc(sizeof(Vec3) * length);
-    for (int i = 0; i < length; ++i) {
-        centroids[i] = center_triangle(triangles[i]);
-    }
-
-    // Choose the axis to split based on the depth
-    Vec3 extent = diff_vec3((Vec3) {node->bbox.x.max, node->bbox.y.max, node->bbox.z.max}, (Vec3) {node->bbox.x.min, node->bbox.y.min, node->bbox.z.min});
-    if (extent.x > extent.y && extent.x > extent.z) sortAxis = 0;
-    if (extent.y > extent.x && extent.y > extent.z) sortAxis = 1;
-    if (extent.z > extent.x && extent.z > extent.y) sortAxis = 2;
-
-    // Sort centroids
-    qsort(centroids, length, sizeof(Vec3), compareCentroids);
-
-    // Split triangles into two groups at the median
-    int median = length / 2;
-
-    Triangle* leftTriangles = (Triangle*)malloc(sizeof(Triangle) * median);
-    Triangle* rightTriangles = (Triangle*)malloc(sizeof(Triangle) * (length - median));
-    int leftCount = 0, rightCount = 0;
-
-    for (int i = 0; i < length; ++i) {
-        if (i < median) {
-            leftTriangles[leftCount++] = triangles[i];
-        } else {
-            rightTriangles[rightCount++] = triangles[i];
-        }
-    }
-
-    // Recursively build left and right children
-    node->left = build_bvh_fast(leftTriangles, leftCount, depth + 1);
-    node->right = build_bvh_fast(rightTriangles, rightCount, depth + 1);
+    node->left = build_bvh_geoms(left_geom, leftCount, depth + 1);
+    node->right = build_bvh_geoms(right_geom, rightCount, depth + 1);
 
     free(centroids);
 
@@ -244,12 +171,8 @@ BvhNode* build_bvh_fast(Triangle triangles[], int length, int depth) {
 }
 
 
-BvhNode* build_bvh(Sphere spheres[], int length) {
-    return build_bvh_sphere_fast(spheres, length, 0);
-}
-
-BvhNode* build_bvh_tri(Triangle triangles[], int length) {
-    return build_bvh_fast(triangles, length, 0);
+BvhNode* build_bvh(Geometry geoms[], int length) {
+    return build_bvh_geoms(geoms, length, 0);
 }
 
 bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitRecord *record, int *num_intersects, int depth) {
@@ -264,13 +187,9 @@ bool ray_intersect_bvh(const BvhNode *node, const Ray *ray, Interval ray_t, HitR
     }
 
     // Check if this is a leaf node
-    if (node->left == NULL && node->right == NULL && (node->sphere != NULL || node->triangle != NULL)) {
+    if (node->left == NULL && node->right == NULL && (node->geom != NULL)) {
         // Test intersection with the sphere at this leaf node
-        if (node->sphere != NULL) {
-            return ray_intersect_sphere(ray, node->sphere, &ray_t, record, num_intersects);
-        } else {
-            return ray_intersect_triangle(ray, node->triangle, &ray_t, record, num_intersects);
-        }
+        return ray_intersect_geom(ray, node->geom, &ray_t, record, num_intersects);
     }
 
     // If not a leaf node, recursively check children

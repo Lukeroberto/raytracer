@@ -1,6 +1,5 @@
 #ifndef QUAD_H
 #define QUAD_H
-
 #include "aabb.h"
 #include "hittable.h"
 #include "types.h"
@@ -40,8 +39,8 @@ Point3 get_opposite_corner(Quad q) {
     return add_vec3(q.corner, add_vec3(q.dir1, q.dir2));
 }
 
-AABB create_aabb_for_quad(Quad q) {
-    return create_aabb_for_point(q.corner, get_opposite_corner(q));
+AABB create_aabb_for_quad(Quad *q) {
+    return create_aabb_for_point(q->corner, get_opposite_corner(*q));
 }
 
 bool is_interior(double alpha, double beta, HitRecord* rec) {

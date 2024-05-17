@@ -2,15 +2,14 @@
 
 ## Planned upgrades/features:
 
-* [ ] add emissive objects, overall more cohesive material types
 * [x] implement BVH for spheres
 * [x] support loading in triangle meshes
 * [x] speed up triangle meshes with BVH support
-* [ ] debug/visualize BVH by implementing ray-quad intersection
-* [ ] support fully keyboard, ie aswd for movement, up/down/left/right or mouse for camera angle
-* [ ] optionally run on more than 1 core
-* [ ] refactor to avoid recursion
 * [ ] refactor to header + implementation instead of headerless everywhere
+* [ ] support fully keyboard, ie aswd for movement, up/down/left/right or mouse for camera angle
+* [ ] debug/visualize BVH by implementing ray-quad intersection
+* [ ] add emissive objects, overall more cohesive material types
+* [ ] optionally run multi-threaded
 * [ ] implement material that links rays between 2 materials (ie portal-esque render)
 
 

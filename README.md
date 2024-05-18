@@ -5,7 +5,7 @@
 * [x] implement BVH for spheres
 * [x] support loading in triangle meshes
 * [x] speed up triangle meshes with BVH support
-* [ ] refactor to header + implementation instead of headerless everywhere
+* [ ] refactor to header + implementation instead of headerless everywhere (In progress)
 * [ ] support fully keyboard, ie aswd for movement, up/down/left/right or mouse for camera angle
 * [ ] debug/visualize BVH by implementing ray-quad intersection
 * [ ] add emissive objects, overall more cohesive material types

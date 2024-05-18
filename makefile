@@ -1,11 +1,32 @@
-raytracer : ./src/main.c ./include/*.h
-	gcc -o raytracer ./src/main.c -I./include -I./libraries -lm -lSDL2 -O3 -march=native -Ofast -ffast-math
+# Define compiler
+CC = gcc
 
-debug: ./src/main.c ./include/*.h
-	gcc -o raytracer ./src/main.c -I./include -I./libraries -lm -lSDL2 -std=c2x -pg -gdwarf-4 -Wall -Wpedantic -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -pedantic -fsanitize=undefined,address
+# Define C compiler flags (feel free to customize)
+CFLAGS = -Wall -g
 
-test : ./tests/unit_tests.c ./include/*.h
-	gcc -o test ./tests/unit_tests.c -I./include -I./libraries -lm -lSDL2 -std=c2x -pg -gdwarf-4 -Wall -Wpedantic -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined,address 
+# Define include directory path (assuming makefile is in top directory)
+IDIR = ./include
 
-clean : 
-	rm -f raytracer test
+# Define source directory path
+SRCDIR = ./src
+
+# Define object files
+OBJS = $(SRCDIR)/*.o
+
+# Define target executable name
+TARGET = main
+
+# Define all rule (builds the final executable)
+all: $(TARGET)
+
+# Define rule to build the executable 
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) ./src/main.c $(OBJS) -L$(IDIR) -lm
+
+# Define rule to build object files from source files
+$(SRCDIR)/%.o: $(SRCDIR)/%.c $(IDIR)/%.h
+	$(CC) $(CFLAGS) -c -I$(IDIR) $< -o $@
+
+# Phony clean target to remove object files and executable
+clean:
+	rm -f $(OBJS) $(TARGET)
